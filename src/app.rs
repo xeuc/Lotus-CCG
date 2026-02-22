@@ -13,8 +13,9 @@ impl Plugin for CCGLotusPlugin {
         app
             .insert_resource(DirectionalLightShadowMap { size: 4096 })
             .add_systems(Startup, setup)
-            .add_systems(Update, animate_light_direction)
+            // .add_systems(Update, animate_light_direction)
             .add_systems(Update, rotate_x)
+            .add_systems(Update, rotate_z)
         ;
 
     }
@@ -33,7 +34,7 @@ fn setup(
     // Spawn camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(0.0, 0.0, 10.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+        Transform::from_xyz(0.0, 0.0, 5.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
         // EnvironmentMapLight {
         //     diffuse_map: asset_server.load("environment_maps/pisa_diffuse_rgb9e5_zstd.ktx2"),
         //     specular_map: asset_server.load("environment_maps/pisa_specular_rgb9e5_zstd.ktx2"),
@@ -85,18 +86,18 @@ fn setup(
     commands.spawn((
         // animation_to_play,
         SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLTF_PATH),)),
-        Rotate,
+        RotateX,
         Transform::from_rotation(Quat::from_euler(EulerRot::ZYX, FRAC_PI_2, 0.0, 0.0))
-            .with_translation(vec3(5.0, 0.0, 0.0))
+            .with_translation(vec3(2.0, 0.0, 0.0))
     ))
     // .observe(play_animation_when_ready)
     ;
 
     commands.spawn((
         SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(CARD_PATH),)),
-        Rotate,
-        Transform::from_rotation(Quat::from_euler(EulerRot::ZYX, FRAC_PI_2, 0.0, 0.0))
-            .with_translation(vec3(-5.0, 0.0, 0.0))
+        RotateZ,
+        Transform::from_rotation(Quat::from_euler(EulerRot::ZYX, 0.0, 0.0, FRAC_PI_2))
+            .with_translation(vec3(-2.0, 0.0, 0.0))
     ));
 
 
@@ -155,15 +156,29 @@ fn animate_light_direction(
 
 fn rotate_x(
     time: Res<Time>,
-    mut query: Query<&mut Transform, With<Rotate>>,
+    mut query: Query<&mut Transform, With<RotateX>>,
 ) {
     for mut transform in &mut query {
         transform.rotation *= Quat::from_rotation_x(time.delta_secs() * PI / 2.0);
     }
 }
 
+fn rotate_z(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<RotateZ>>,
+) {
+    for mut transform in &mut query {
+        transform.rotation *= Quat::from_rotation_z(time.delta_secs() * PI / 2.0);
+    }
+}
+
 #[derive(Component)]
-struct Rotate;
+struct RotateX;
+
+
+
+#[derive(Component)]
+struct RotateZ;
 
 
 // A component that stores a reference to an animation we want to play. This is
