@@ -4,7 +4,7 @@
 
 use std::f32::consts::*;
 
-use bevy::{light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap}, prelude::*, scene::SceneInstanceReady};
+use bevy::{image::{ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor}, light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap}, prelude::*, scene::SceneInstanceReady};
 
 pub struct CCGLotusPlugin;
 
@@ -13,6 +13,7 @@ impl Plugin for CCGLotusPlugin {
         app
             .insert_resource(DirectionalLightShadowMap { size: 4096 })
             .add_systems(Startup, setup)
+            .add_systems(Startup, spawn_cube)
             // .add_systems(Update, animate_light_direction)
             .add_systems(Update, rotate_x)
             .add_systems(Update, rotate_z)
@@ -104,6 +105,60 @@ fn setup(
     
 }
 
+
+fn spawn_cube(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+
+    let image_with_default_sampler = asset_server.load_with_settings(
+        "textures\\red_border.png",
+        |s: &mut ImageLoaderSettings| {
+            *s = ImageLoaderSettings {
+                sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
+                    mag_filter: bevy::image::ImageFilterMode::Nearest,
+                    min_filter: bevy::image::ImageFilterMode::Nearest,
+                    mipmap_filter: bevy::image::ImageFilterMode::Nearest,
+                    address_mode_u: ImageAddressMode::ClampToEdge,
+                    address_mode_v: ImageAddressMode::ClampToEdge,
+                    ..default()
+                }),
+                ..default()
+            };
+        },
+    );
+
+    // central cube with not repeated texture
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(1.4, 2.0, 0.64))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color_texture: Some(image_with_default_sampler.clone()),
+            alpha_mode: AlphaMode::Mask(0.5),
+            ..default()
+        })),
+        RotateZ,
+        Transform::from_translation(Vec3::ZERO),
+    ));
+
+    let photo_texture = asset_server.load("textures/40921678_S1J5493BMXVBDKB3RF7P22B9N0.jpeg");
+
+    // Spawn image
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d {
+            normal: Dir3::Z,
+            half_size: Vec2::new(0.65, 0.95), // 13*19
+        })),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color_texture: Some(photo_texture),
+            ..default()
+        })),
+        RotateZ,
+        Transform::from_translation(Vec3::new(0.0, 0.0, 0.32)),
+    ));
+
+}
 
 fn play_animation_when_ready(
     scene_ready: On<SceneInstanceReady>,
