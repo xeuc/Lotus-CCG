@@ -15,6 +15,7 @@ impl Plugin for CCGLotusPlugin {
             .add_systems(Startup, setup)
             .add_systems(Startup, spawn_card)
             .add_systems(Update, rotate_x)
+            .add_systems(Update, rotate_y)
             .add_systems(Update, rotate_z)
         ;
 
@@ -83,6 +84,7 @@ fn setup(
 
     // Spawn an entity with our components, and connect it to an observer that
     // will trigger when the scene is loaded and spawned.
+    // Spawn card pack model with animation
     commands.spawn((
         animation_to_play,
         SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLTF_PATH),)),
@@ -93,6 +95,7 @@ fn setup(
     .observe(play_animation_when_ready)
     ;
 
+    // Spawn card model
     commands.spawn((
         SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(CARD_PATH),)),
         RotateZ,
@@ -100,8 +103,6 @@ fn setup(
             .with_translation(vec3(-2.0, 0.0, 0.0))
     ));
 
-
-    
 }
 
 
@@ -112,41 +113,60 @@ fn spawn_card(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
 
-    let image_with_default_sampler = asset_server.load_with_settings(
-        // "textures\\red_border.png",
-        "textures\\rainbow_border.png",
-        |s: &mut ImageLoaderSettings| {
-            *s = ImageLoaderSettings {
-                sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
-                    mag_filter: bevy::image::ImageFilterMode::Nearest,
-                    min_filter: bevy::image::ImageFilterMode::Nearest,
-                    mipmap_filter: bevy::image::ImageFilterMode::Nearest,
-                    address_mode_u: ImageAddressMode::ClampToEdge,
-                    address_mode_v: ImageAddressMode::ClampToEdge,
-                    ..default()
-                }),
-                ..default()
-            };
-        },
-    );
+    // let image_with_default_sampler = asset_server.load_with_settings(
+    //     // "textures\\red_border.png",
+    //     "textures\\rainbow_border.png",
+    //     |s: &mut ImageLoaderSettings| {
+    //         *s = ImageLoaderSettings {
+    //             sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
+    //                 mag_filter: bevy::image::ImageFilterMode::Nearest,
+    //                 min_filter: bevy::image::ImageFilterMode::Nearest,
+    //                 mipmap_filter: bevy::image::ImageFilterMode::Nearest,
+    //                 address_mode_u: ImageAddressMode::ClampToEdge,
+    //                 address_mode_v: ImageAddressMode::ClampToEdge,
+    //                 ..default()
+    //             }),
+    //             ..default()
+    //         };
+    //     },
+    // );
 
-    // central cube with not repeated texture
+    let card_thickness = 0.064;
+        
+    // spawn frame of card
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.4, 2.0, 0.64))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color_texture: Some(image_with_default_sampler.clone()),
-            alpha_mode: AlphaMode::Mask(0.5),
-            metallic: 0.0,
-            perceptual_roughness: 1.0,
-            ..default()
-        })),
-        // RotateZ,
+        Mesh3d(meshes.add(Cuboid::new(1.4, 2.0, card_thickness))),
+        MeshMaterial3d(
+            materials.add(StandardMaterial {
+                base_color: Color::WHITE,
+                // alpha_mode: AlphaMode::Mask(0.5),
+                // metallic: 0.0,
+                // perceptual_roughness: 1.0,
+                ..default()
+            })
+        ),
+        RotateY,
         Transform::from_translation(Vec3::ZERO),
     ))
-    .with_children(|parent| {
-        let photo_texture = asset_server.load("textures/40921678_S1J5493BMXVBDKB3RF7P22B9N0.jpeg");
 
-        // Spawn image
+    // spawn frame of card
+    // commands.spawn((
+    //     Mesh3d(meshes.add(Cuboid::new(1.4, 2.0, 0.064))),
+    //     MeshMaterial3d(materials.add(StandardMaterial {
+    //         base_color_texture: Some(image_with_default_sampler.clone()),
+    //         alpha_mode: AlphaMode::Mask(0.5),
+    //         metallic: 0.0,
+    //         perceptual_roughness: 1.0,
+    //         ..default()
+    //     })),
+    //     // RotateZ,
+    //     Transform::from_translation(Vec3::ZERO),
+    // ))
+    .with_children(|parent| {
+
+        
+        // spawn recto image
+        let photo_texture = asset_server.load("textures/40921678_S1J5493BMXVBDKB3RF7P22B9N0.jpeg");
         parent.spawn((
             Mesh3d(meshes.add(Plane3d {
                 normal: Dir3::Z,
@@ -159,7 +179,24 @@ fn spawn_card(
                 ..default()
             })),
             // RotateZ,
-            Transform::from_translation(Vec3::new(0.0, 0.0, 0.32)), // Don't care about z-fighting
+            Transform::from_translation(Vec3::new(0.0, 0.0, card_thickness / 2.0 + 0.001)),
+        ));
+        
+        // spawn verso image
+        let photo_texture = asset_server.load("textures/25973315_8HS551035DXVATFV2SADZRBG30.jpeg");
+        parent.spawn((
+            Mesh3d(meshes.add(Plane3d {
+                normal: Dir3::Z,
+                half_size: Vec2::new(0.65, 0.95), // 13*19
+            })),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color_texture: Some(photo_texture),
+                metallic: 0.0,
+                perceptual_roughness: 1.0,
+                ..default()
+            })),
+            // RotateZ,
+            Transform::from_translation(Vec3::new(0.0, 0.0, -card_thickness / 2.0 - 0.001)).with_rotation(Quat::from_rotation_y(PI)), // Don't care about z-fighting
         ));
     });
 
@@ -202,7 +239,7 @@ fn play_animation_when_ready(
 }
 
 
-fn animate_light_direction(
+fn _animate_light_direction(
     time: Res<Time>,
     mut query: Query<&mut Transform, With<DirectionalLight>>,
 ) {
@@ -225,6 +262,15 @@ fn rotate_x(
     }
 }
 
+fn rotate_y(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<RotateY>>,
+) {
+    for mut transform in &mut query {
+        transform.rotation *= Quat::from_rotation_y(time.delta_secs() * PI / 2.0);
+    }
+}
+
 fn rotate_z(
     time: Res<Time>,
     mut query: Query<&mut Transform, With<RotateZ>>,
@@ -237,7 +283,8 @@ fn rotate_z(
 #[derive(Component)]
 struct RotateX;
 
-
+#[derive(Component)]
+struct RotateY;
 
 #[derive(Component)]
 struct RotateZ;
