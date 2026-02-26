@@ -78,7 +78,14 @@ fn camera_move_system(
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<Camera3d>>,
+    mut app_exit_events: MessageWriter<AppExit>,
 ) {
+    // sorry lazy
+    if keyboard.pressed(KeyCode::Escape) {
+        info!("Exiting app due to Escape key press");
+        app_exit_events.write(AppExit::Success);
+    }
+
     let Ok(mut transform) = query.single_mut() else { return };
 
     let mut input = Vec3::ZERO;

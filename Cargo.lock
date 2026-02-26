@@ -3,10 +3,11 @@
 version = 4
 
 [[package]]
-name = "CCG-Lotus"
+name = "Lotus-CCG"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_tweening",
 ]
 
 [[package]]
@@ -1446,6 +1447,16 @@ dependencies = [
  "bevy_utils",
  "derive_more",
  "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "bevy_tweening"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af8511c4208a4eb3fdec028088a2ff63f2a4ae4a7079eeb56a0cffae19fe064f"
+dependencies = [
+ "bevy",
  "thiserror 2.0.18",
 ]
 

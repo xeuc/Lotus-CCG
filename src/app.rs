@@ -2,7 +2,9 @@
 // From https://bevy.org/examples/animation/animated-mesh/
 
 
-use std::f32::consts::*;
+use std::{f32::consts::*, time::Duration};
+use bevy_tweening::{Sequence, Tween, TweenAnim, TweeningPlugin, lens::TransformPositionLens};
+
 
 use bevy::{light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap}, prelude::*, scene::SceneInstanceReady};
 
@@ -12,6 +14,8 @@ impl Plugin for CCGLotusPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(DirectionalLightShadowMap { size: 4096 })
+            .add_plugins(TweeningPlugin)
+            // .add_plugins(CameraControllerPlugin)
             .add_systems(Startup, setup)
             .add_systems(Startup, spawn_card)
             .add_systems(Update, rotate_x)
@@ -25,7 +29,7 @@ impl Plugin for CCGLotusPlugin {
 
 // An example asset that contains a mesh and animation.
 const GLTF_PATH: &str = "models/card_pack.gltf";
-const CARD_PATH: &str = "models/card_base_model.gltf";
+// const CARD_PATH: &str = "models/card_base_model.gltf";
 
 fn setup(
     mut commands: Commands,
@@ -88,23 +92,41 @@ fn setup(
     commands.spawn((
         animation_to_play,
         SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(GLTF_PATH),)),
-        RotateX,
-        Transform::from_rotation(Quat::from_euler(EulerRot::ZYX, FRAC_PI_2, 0.0, 0.0))
-            .with_translation(vec3(2.0, 0.0, 0.0))
+        // RotateX,
+        Transform::from_rotation(Quat::from_euler(EulerRot::ZYX, FRAC_PI_2, 0.0, FRAC_PI_2))
+            .with_translation(vec3(0.0, -3.0, 0.0))
     ))
     .observe(play_animation_when_ready)
     ;
 
-    // Spawn card model
-    commands.spawn((
-        SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(CARD_PATH),)),
-        RotateZ,
-        Transform::from_rotation(Quat::from_euler(EulerRot::ZYX, 0.0, 0.0, FRAC_PI_2))
-            .with_translation(vec3(-2.0, 0.0, 0.0))
-    ));
-
 }
 
+use bevy_tweening::Lens;
+
+use crate::move_camera::CameraControllerPlugin;
+
+pub struct BezierPositionLens {
+    pub p0: Vec3,
+    pub p1: Vec3,
+    pub p2: Vec3,
+    pub p3: Vec3,
+}
+
+impl Lens<Transform> for BezierPositionLens {
+    fn lerp(&mut self, mut target: Mut<'_, bevy::prelude::Transform>, ratio: f32) {
+        let t = ratio;
+        let u = 1.0 - t;
+
+        // cubic bezier
+        let pos =
+            u*u*u * self.p0 +
+            3.0*u*u*t * self.p1 +
+            3.0*u*t*t * self.p2 +
+            t*t*t * self.p3;
+
+        target.translation = pos;
+    }
+}
 
 fn spawn_card(
     mut commands: Commands,
@@ -113,26 +135,62 @@ fn spawn_card(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
 
-    // let image_with_default_sampler = asset_server.load_with_settings(
-    //     // "textures\\red_border.png",
-    //     "textures\\rainbow_border.png",
-    //     |s: &mut ImageLoaderSettings| {
-    //         *s = ImageLoaderSettings {
-    //             sampler: ImageSampler::Descriptor(ImageSamplerDescriptor {
-    //                 mag_filter: bevy::image::ImageFilterMode::Nearest,
-    //                 min_filter: bevy::image::ImageFilterMode::Nearest,
-    //                 mipmap_filter: bevy::image::ImageFilterMode::Nearest,
-    //                 address_mode_u: ImageAddressMode::ClampToEdge,
-    //                 address_mode_v: ImageAddressMode::ClampToEdge,
-    //                 ..default()
-    //             }),
-    //             ..default()
-    //         };
-    //     },
-    // );
-
     let card_thickness = 0.064;
-        
+
+    let start_pos = Vec3::new(0.0, -1.5, -4.0);
+    let end_pos   = Vec3::new(0.0, 0.0, 0.5);
+
+    let _tween1 = Tween::new(
+        EaseFunction::CubicOut,
+        Duration::from_secs_f32(10.0),
+        TransformPositionLens {
+            start: start_pos,
+            end: end_pos,
+        },
+    );
+
+    let _pull_out = Tween::new(
+        EaseFunction::QuadraticOut,
+        Duration::from_secs_f32(5.0),
+        TransformPositionLens {
+            start: Vec3::new(0.0, -1.5, -4.0),
+            end:   Vec3::new(0.0, -0.5, -4.0),
+        },
+    );
+    let _stretch = Tween::new(
+        EaseFunction::QuadraticInOut,
+        Duration::from_secs_f32(5.0),
+        TransformPositionLens {
+            start: Vec3::new(0.0, -0.5, -4.0),
+            end:   Vec3::new(0.0, 0.2, -6.0),
+        },
+    );
+    let _reveal = Tween::new(
+        EaseFunction::CubicOut,
+        Duration::from_secs_f32(5.0),
+        TransformPositionLens {
+            start: Vec3::new(0.0, 0.2, -6.0),
+            end:   Vec3::new(0.0, 0.0, 0.5),
+        },
+    );
+    let _tween2 = Sequence::new([
+        _pull_out,
+        _stretch,
+        _reveal,
+    ]);
+
+
+    let tween3 = Tween::new(
+        EaseFunction::CubicInOut,
+        Duration::from_secs_f32(5.0),
+        BezierPositionLens {
+            p0: Vec3::new(0.0, -1.5, -4.0),
+            p1: Vec3::new(0.0, -0.8, -4.5),
+            p2: Vec3::new(0.0,  0.5, -6.5),
+            p3: Vec3::new(0.0,  0.0,  0.5),
+        },
+    );
+
     // spawn frame of card
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(1.4, 2.0, card_thickness))),
@@ -145,25 +203,11 @@ fn spawn_card(
                 ..default()
             })
         ),
-        RotateY,
-        Transform::from_translation(Vec3::ZERO),
+        // RotateY,
+        Transform::from_translation(start_pos),
+        TweenAnim::new(tween3),
     ))
-
-    // spawn frame of card
-    // commands.spawn((
-    //     Mesh3d(meshes.add(Cuboid::new(1.4, 2.0, 0.064))),
-    //     MeshMaterial3d(materials.add(StandardMaterial {
-    //         base_color_texture: Some(image_with_default_sampler.clone()),
-    //         alpha_mode: AlphaMode::Mask(0.5),
-    //         metallic: 0.0,
-    //         perceptual_roughness: 1.0,
-    //         ..default()
-    //     })),
-    //     // RotateZ,
-    //     Transform::from_translation(Vec3::ZERO),
-    // ))
     .with_children(|parent| {
-
         
         // spawn recto image
         let photo_texture = asset_server.load("textures/40921678_S1J5493BMXVBDKB3RF7P22B9N0.jpeg");
@@ -201,7 +245,6 @@ fn spawn_card(
     });
 
 
-
 }
 
 fn play_animation_when_ready(
@@ -225,6 +268,7 @@ fn play_animation_when_ready(
                 //
                 // If you want to try stopping and switching animations, see the
                 // `animated_mesh_control.rs` example.
+                // player.play(animation_to_play.index).repeat();
                 player.play(animation_to_play.index).repeat();
 
                 // Add the animation graph. This only needs to be done once to
