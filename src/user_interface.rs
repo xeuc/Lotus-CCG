@@ -13,13 +13,13 @@ pub struct UIPlugin;
 impl Plugin for UIPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Startup, (
+            .add_systems(OnEnter(GameState::InUI), (
                 spawn_camera,
                 spawn_test_button,
+            ))
+            .add_systems(Update, (
                 button_handler,
             ).run_if(in_state(GameState::InUI)))
-            // .add_systems(OnEnter(GameState::InUI), setup_ui)
-            // .add_systems(Update, ui_system.run_if(in_state(GameState::InUI)))
             // .add_systems(OnExit(GameState::InUI), cleanup_ui);
             ;
     }
@@ -58,7 +58,8 @@ fn spawn_test_button(
             },
         ))
         .with_child((
-            Text::new("Test Button"),
+            DespawnOnExit(GameState::InUI),
+            Text::new("Open Pack"),
             TextFont {
                 font_size: 30.0,
                 ..default()

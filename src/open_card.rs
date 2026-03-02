@@ -4,7 +4,7 @@
 use std::{f32::consts::*, time::Duration};
 
 use bevy::{light::CascadeShadowConfigBuilder, prelude::*, scene::SceneInstanceReady};
-use bevy_tweening::{Lens, Sequence, Tween, TweeningPlugin, lens::TransformPositionLens};
+use bevy_tweening::{Lens, Sequence, Tween, TweenAnim, TweeningPlugin, lens::TransformPositionLens};
 
 use crate::GameState;
 
@@ -30,13 +30,17 @@ impl Plugin for OpenCardPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugins(TweeningPlugin)
-            .add_systems(Startup, (
+            .add_systems(OnEnter(GameState::OpeningPack), (
                 spawn_camera,
                 spawn_light,
                 spawn_card_pack,
-                spawn_card,
+                detect_pack_animation_finished_and_spawn_cards,
                 // _spawn_cube,
-            ).run_if(in_state(GameState::OpeningPack)))
+            ))
+            // .add_systems(Update, (
+            //     ddddddddddd,
+            // ).run_if(in_state(GameState::OpeningPack)))
+            // .add_systems(OnExit(GameState::OpeningPack), cleanup_ui);
             ;
     }
 }
@@ -81,7 +85,7 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         DespawnOnExit(GameState::OpeningPack),
         Camera3d::default(),
-        Transform::from_xyz(0.0, 0.0, 20.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+        Transform::from_xyz(0.0, 0.0, 40.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
     ));
 }
 
@@ -173,154 +177,167 @@ fn play_animation_when_ready(
                 // If you want to try stopping and switching animations, see the
                 // `animated_mesh_control.rs` example.
                 // player.play(animation_to_play.index).repeat();
-                player.play(animation_to_play.index).repeat();
+                player.play(animation_to_play.index);
 
                 // Add the animation graph. This only needs to be done once to
                 // connect the animation player to the mesh.
-                commands
-                    .entity(child)
+                // commands
+                //     .entity(child)
+                //     .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()))
+                //     ;
+                commands.entity(child)
                     .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()))
-                    ;
+                    .insert(PackOpeningAnimation);
+            }
+        }
+    }
+}
+
+#[derive(Component)]
+struct PackOpeningAnimation;
+
+fn detect_pack_animation_finished_and_spawn_cards(
+    mut commands: Commands,
+    players: Query<(Entity, &AnimationToPlay), With<PackOpeningAnimation>>,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for (entity, player) in &players {
+        info!("LotusDebug - Checking if pack opening animation finished...");
+        if false {
+            info!("LotusDebug - Pack opening animation finished, spawning cards...");
+            commands.entity(entity).remove::<PackOpeningAnimation>();
+
+            let card_height = 20.0;
+            let card_width = 14.0;
+            let card_thickness = 0.1;
+
+            let start_pos = CARP_POS;
+            let end_pos   = Vec3::new(0.0, 0.0, 0.5);
+
+            let _tween1 = Tween::new(
+                EaseFunction::CubicOut,
+                Duration::from_secs_f32(10.0),
+                TransformPositionLens {
+                    start: start_pos,
+                    end: end_pos,
+                },
+            );
+
+            let _pull_out = Tween::new(
+                EaseFunction::QuadraticOut,
+                Duration::from_secs_f32(5.0),
+                TransformPositionLens {
+                    start: Vec3::new(0.0, -1.5, -4.0),
+                    end:   Vec3::new(0.0, -0.5, -4.0),
+                },
+            );
+            let _stretch = Tween::new(
+                EaseFunction::QuadraticInOut,
+                Duration::from_secs_f32(5.0),
+                TransformPositionLens {
+                    start: Vec3::new(0.0, -0.5, -4.0),
+                    end:   Vec3::new(0.0, 0.2, -6.0),
+                },
+            );
+            let _reveal = Tween::new(
+                EaseFunction::CubicOut,
+                Duration::from_secs_f32(5.0),
+                TransformPositionLens {
+                    start: Vec3::new(0.0, 0.2, -6.0),
+                    end:   Vec3::new(0.0, 0.0, 0.5),
+                },
+            );
+            let _tween2 = Sequence::new([
+                _pull_out,
+                _stretch,
+                _reveal,
+            ]);
+
+
+
+            let image_height = card_width - 1.;
+            let image_width = card_height - 1.;
+            let a = Vec3::new(0.0, 0.0, -2.5 * card_thickness);
+            let b = Vec3::new(0.0, 0.0, -1.5 * card_thickness);
+            let c = Vec3::new(0.0, 0.0, 0.0);
+            let d = Vec3::new(0.0, 0.0, 1.5 * card_thickness);
+            let e = Vec3::new(0.0, 0.0, -2.5 * card_thickness);
+            for pos in [a+CARP_POS, b+CARP_POS, c+CARP_POS, d+CARP_POS, e+CARP_POS] {
+                
+                let tween3 = Tween::new(
+                    EaseFunction::CubicInOut,
+                    Duration::from_secs_f32(10.0),
+                    BezierPositionLens {
+                        p0: Vec3::new(0.0, -1.5, -4.0) * 5.0 + a,
+                        p1: Vec3::new(0.0, -0.8, -4.5) * 5.0 + b,
+                        p2: Vec3::new(0.0,  0.5, -6.5) * 5.0 + c,
+                        p3: Vec3::new(0.0,  0.0,  0.5) * 5.0 + d,
+                    },
+                );
+
+                // spawn frame of card
+                commands.spawn((
+                    DespawnOnExit(GameState::OpeningPack),
+                    Mesh3d(meshes.add(Cuboid::new(card_width, card_height, card_thickness))),
+                    MeshMaterial3d(
+                        materials.add(StandardMaterial {
+                            base_color: Color::WHITE,
+                            // alpha_mode: AlphaMode::Mask(0.5),
+                            // metallic: 0.0,
+                            // perceptual_roughness: 1.0,
+                            ..default()
+                        })
+                    ),
+                    // RotateY,
+                    Transform::from_translation(pos),
+                    TweenAnim::new(tween3),
+                ))
+                .with_children(|parent| {
+                    
+                    // spawn recto image
+                    let photo_texture = asset_server.load("textures/40921678_S1J5493BMXVBDKB3RF7P22B9N0.jpeg");
+                    parent.spawn((
+                        DespawnOnExit(GameState::OpeningPack),
+                        Mesh3d(meshes.add(Plane3d {
+                            normal: Dir3::Z,
+                            half_size: Vec2::new(image_height/2., image_width/2.), // 13*19
+                        })),
+                        MeshMaterial3d(materials.add(StandardMaterial {
+                            base_color_texture: Some(photo_texture),
+                            metallic: 0.0,
+                            perceptual_roughness: 1.0,
+                            ..default()
+                        })),
+                        // RotateZ,
+                        Transform::from_translation(Vec3::new(0.0, 0.0, card_thickness / 2.0 + 0.001)),
+                    ));
+                    
+                    // spawn verso image
+                    let photo_texture = asset_server.load("textures/25973315_8HS551035DXVATFV2SADZRBG30.jpeg");
+                    parent.spawn((
+                        DespawnOnExit(GameState::OpeningPack),
+                        Mesh3d(meshes.add(Plane3d {
+                            normal: Dir3::Z,
+                            half_size: Vec2::new(image_height/2., image_width/2.), // 13*19
+                        })),
+                        MeshMaterial3d(materials.add(StandardMaterial {
+                            base_color_texture: Some(photo_texture),
+                            metallic: 0.0,
+                            perceptual_roughness: 1.0,
+                            ..default()
+                        })),
+                        // RotateZ,
+                        Transform::from_translation(Vec3::new(0.0, 0.0, -card_thickness / 2.0 - 0.001)).with_rotation(Quat::from_rotation_y(PI)), // Don't care about z-fighting
+                    ));
+                });
             }
         }
     }
 }
 
 
-fn spawn_card(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-
-    let card_height = 20.0;
-    let card_width = 14.0;
-    let card_thickness = 0.1;
-
-    let start_pos = CARP_POS;
-    let end_pos   = Vec3::new(0.0, 0.0, 0.5);
-
-    let _tween1 = Tween::new(
-        EaseFunction::CubicOut,
-        Duration::from_secs_f32(10.0),
-        TransformPositionLens {
-            start: start_pos,
-            end: end_pos,
-        },
-    );
-
-    let _pull_out = Tween::new(
-        EaseFunction::QuadraticOut,
-        Duration::from_secs_f32(5.0),
-        TransformPositionLens {
-            start: Vec3::new(0.0, -1.5, -4.0),
-            end:   Vec3::new(0.0, -0.5, -4.0),
-        },
-    );
-    let _stretch = Tween::new(
-        EaseFunction::QuadraticInOut,
-        Duration::from_secs_f32(5.0),
-        TransformPositionLens {
-            start: Vec3::new(0.0, -0.5, -4.0),
-            end:   Vec3::new(0.0, 0.2, -6.0),
-        },
-    );
-    let _reveal = Tween::new(
-        EaseFunction::CubicOut,
-        Duration::from_secs_f32(5.0),
-        TransformPositionLens {
-            start: Vec3::new(0.0, 0.2, -6.0),
-            end:   Vec3::new(0.0, 0.0, 0.5),
-        },
-    );
-    let _tween2 = Sequence::new([
-        _pull_out,
-        _stretch,
-        _reveal,
-    ]);
-
-
-    let _tween3 = Tween::new(
-        EaseFunction::CubicInOut,
-        Duration::from_secs_f32(5.0),
-        BezierPositionLens {
-            p0: Vec3::new(0.0, -1.5, -4.0),
-            p1: Vec3::new(0.0, -0.8, -4.5),
-            p2: Vec3::new(0.0,  0.5, -6.5),
-            p3: Vec3::new(0.0,  0.0,  0.5),
-        },
-    );
-
-    let image_height = card_width - 1.;
-    let image_width = card_height - 1.;
-    let a = CARP_POS + Vec3::new(0.0, 0.0, -2.5 * card_thickness);
-    let b = CARP_POS + Vec3::new(0.0, 0.0, -1.5 * card_thickness);
-    let c = CARP_POS + Vec3::new(0.0, 0.0, 0.0);
-    let d = CARP_POS + Vec3::new(0.0, 0.0, 1.5 * card_thickness);
-    let e = CARP_POS + Vec3::new(0.0, 0.0, -2.5 * card_thickness);
-    for pos in [a, b, c, d, e] {
-        // spawn frame of card
-        commands.spawn((
-            DespawnOnExit(GameState::OpeningPack),
-            Mesh3d(meshes.add(Cuboid::new(card_width, card_height, card_thickness))),
-            MeshMaterial3d(
-                materials.add(StandardMaterial {
-                    base_color: Color::WHITE,
-                    // alpha_mode: AlphaMode::Mask(0.5),
-                    // metallic: 0.0,
-                    // perceptual_roughness: 1.0,
-                    ..default()
-                })
-            ),
-            // RotateY,
-            Transform::from_translation(pos),
-            // TweenAnim::new(tween3),
-        ))
-        .with_children(|parent| {
-            
-            // spawn recto image
-            let photo_texture = asset_server.load("textures/40921678_S1J5493BMXVBDKB3RF7P22B9N0.jpeg");
-            parent.spawn((
-                DespawnOnExit(GameState::OpeningPack),
-                Mesh3d(meshes.add(Plane3d {
-                    normal: Dir3::Z,
-                    half_size: Vec2::new(image_height/2., image_width/2.), // 13*19
-                })),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color_texture: Some(photo_texture),
-                    metallic: 0.0,
-                    perceptual_roughness: 1.0,
-                    ..default()
-                })),
-                // RotateZ,
-                Transform::from_translation(Vec3::new(0.0, 0.0, card_thickness / 2.0 + 0.001)),
-            ));
-            
-            // spawn verso image
-            let photo_texture = asset_server.load("textures/25973315_8HS551035DXVATFV2SADZRBG30.jpeg");
-            parent.spawn((
-                DespawnOnExit(GameState::OpeningPack),
-                Mesh3d(meshes.add(Plane3d {
-                    normal: Dir3::Z,
-                    half_size: Vec2::new(image_height/2., image_width/2.), // 13*19
-                })),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color_texture: Some(photo_texture),
-                    metallic: 0.0,
-                    perceptual_roughness: 1.0,
-                    ..default()
-                })),
-                // RotateZ,
-                Transform::from_translation(Vec3::new(0.0, 0.0, -card_thickness / 2.0 - 0.001)).with_rotation(Quat::from_rotation_y(PI)), // Don't care about z-fighting
-            ));
-        });
-    }
-
-
-
-
-}
 
 
 
