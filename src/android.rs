@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+// Platform     | Support of new Blockbench's armatures feature
+// -------------|-------------------------------
+// Windows/x86  | ✅ Yes
+// Android/arm  | ❌ No (Gltf/glb loads, armatured elements don't show up)
 
 use bevy::window::AppLifecycle;
 use bevy::winit::WinitSettings;

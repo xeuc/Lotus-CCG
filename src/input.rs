@@ -1,7 +1,5 @@
-use bevy::prelude::*;
-
 use bevy::{
-    color::palettes::basic::*,
+    prelude::*,
     input::{gestures::RotationGesture, touch::TouchPhase},
 };
 
@@ -12,34 +10,13 @@ impl Plugin for InputPlugin {
         app
             .add_systems(Update, (
                 touch_camera,
-                button_handler,
             ))
             ;
     }
 }
 
 // INPUT SYSTEMS
-fn button_handler(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
-    >,
-) {
-    for (interaction, mut color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                // *color = BLUE.into();
-                *color = GREEN.into();
-            }
-            Interaction::Hovered => {
-                *color = GRAY.into();
-            }
-            Interaction::None => {
-                *color = WHITE.into();
-            }
-        }
-    }
-}
+
 
 fn touch_camera(
     window: Query<&Window>,

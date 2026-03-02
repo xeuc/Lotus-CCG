@@ -1,0 +1,96 @@
+//user_interface.rs
+// previously ui.rs but wasn't recognized by vsc extention
+
+use bevy::{
+    color::palettes::basic::*,
+    prelude::*,
+};
+
+use crate::GameState;
+
+pub struct UIPlugin;
+
+impl Plugin for UIPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_systems(Startup, (
+                spawn_camera,
+                spawn_test_button,
+                button_handler,
+            ).run_if(in_state(GameState::InUI)))
+            // .add_systems(OnEnter(GameState::InUI), setup_ui)
+            // .add_systems(Update, ui_system.run_if(in_state(GameState::InUI)))
+            // .add_systems(OnExit(GameState::InUI), cleanup_ui);
+            ;
+    }
+}
+
+
+// SETUP
+
+/// ui camera
+fn spawn_camera(mut commands: Commands) {
+    commands.spawn((
+        Camera2d,
+        DespawnOnExit(GameState::InUI)
+    ));
+}
+
+/// set up a simple 3D scene
+fn spawn_test_button(
+    mut commands: Commands,
+) {
+
+    info!("LotusDebug - Setting up scene...");
+    // spawn button test ui
+    commands
+        .spawn((
+            Button,
+            DespawnOnExit(GameState::InUI),
+            Node {
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Absolute,
+                left: px(50),
+                right: px(50),
+                bottom: px(50),
+                ..default()
+            },
+        ))
+        .with_child((
+            Text::new("Test Button"),
+            TextFont {
+                font_size: 30.0,
+                ..default()
+            },
+            TextColor::BLACK,
+            TextLayout::new_with_justify(Justify::Center),
+        ));
+}
+
+
+// Update
+fn button_handler(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    for (interaction, mut color) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                // *color = BLUE.into();
+                *color = GREEN.into();
+                // Launch the opening!
+                next_state.set(GameState::OpeningPack);
+            }
+            Interaction::Hovered => {
+                *color = GRAY.into();
+            }
+            Interaction::None => {
+                *color = WHITE.into();
+            }
+        }
+    }
+}
