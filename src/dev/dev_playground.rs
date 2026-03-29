@@ -37,10 +37,12 @@ impl Plugin for DevPlaygroundPlugin {
             .add_systems(OnEnter(GameState::DevPlayground), (
                 reset_resources,
                 spawn_camera,
+                spawn_light,
                 spawn_return_button,
                 spawn_swipe_button,
-                spawn_pack_lid,
-                spawn_cards,
+                // spawn_pack_lid,
+                // spawn_cards,
+                spawn_scene,
                 spawn_pack_body,   // <-- spawns Pack WITH StepIntro in the bundle
             ).chain())
 

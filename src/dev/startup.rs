@@ -33,9 +33,25 @@ pub fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         DespawnOnExit(GameState::DevPlayground),
         Camera3d::default(),
-        Transform::from_xyz(0.0, 0.0, 500.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+        Transform::from_xyz(0.0, 35.0, 0.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
     ));
 }
+
+
+pub fn spawn_light(mut commands: Commands) {
+    // Spawn light
+    commands.spawn((
+        PointLight {
+            shadows_enabled: true,
+            intensity: 10_000_000.,
+            range: 100.0,
+            shadow_depth_bias: 0.2,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 35.0, 0.0),
+    ));
+}
+
 
 
 #[derive(Resource)]
@@ -56,9 +72,7 @@ pub fn spawn_pack_body(
     mut materials_standard: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
-    
     mut materials_color: ResMut<Assets<ColorMaterial>>,
-
     mut animation_players: Query<(Entity, &mut AnimationPlayer)>,
 ) {
     const TEST_ARMATURE_PATH: &str = "models/blender_armature_pack.gltf";
@@ -129,6 +143,19 @@ pub fn spawn_pack_lid(
         
 
         
+}
+
+
+pub fn spawn_scene(
+    mut commands:  Commands,
+    mut meshes:    ResMut<Assets<Mesh>>,
+    // mut materials: ResMut<Assets<ColorMaterial>>,
+    mut materials_standard: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn(SceneRoot(asset_server.load(
+        GltfAssetLabel::Scene(0).from_asset("models/Scene.gltf"),
+    )));
 }
 
 pub fn spawn_cards(

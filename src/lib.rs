@@ -51,7 +51,7 @@ pub fn main() {
             #[cfg(target_os = "android")]
             android::AndroidPlugin,
             dev::dev_playground::DevPlaygroundPlugin,
-            // move_camera::CameraControllerPlugin,
+            move_camera::CameraControllerPlugin,
         ))
         .run();
 }
