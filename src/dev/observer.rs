@@ -1,5 +1,6 @@
 
-use bevy::{color::palettes::basic::*, prelude::*};
+use bevy::prelude::*;
+
 use crate::dev::components::*;
 
 // =============================================================================

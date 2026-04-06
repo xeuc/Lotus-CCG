@@ -1,4 +1,5 @@
-use bevy::{color::palettes::basic::*, prelude::*};
+
+use bevy::prelude::*;
 
 
 // =============================================================================
@@ -152,3 +153,9 @@ impl ArcTween {
         u * u * self.start + 2.0 * u * t * self.control + t * t * self.end
     }
 }
+
+
+
+// cam 
+#[derive(Component)]
+pub struct CameraLocked;

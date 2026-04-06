@@ -1,5 +1,9 @@
 use bevy::{input::mouse::MouseMotion, prelude::*};
 
+use dev::components::CameraLocked;
+
+use crate::dev;
+
 // =========================
 // Plugin
 // =========================
@@ -45,10 +49,10 @@ struct MouseLookState {
 
 fn camera_look_system(
     mut mouse_events: MessageReader<MouseMotion>,
-    mut query: Query<&mut Transform, With<Camera3d>>,
+    mut transform_cam: Single<&mut Transform, (With<Camera3d>, Without<CameraLocked>)>,
     mut look: ResMut<MouseLookState>,
 ) {
-    let Ok(mut transform) = query.single_mut() else { return };
+    // let Ok(mut transform) = query.single_mut() else { return };
 
     let mut delta = Vec2::ZERO;
     for ev in mouse_events.read() {
@@ -65,7 +69,9 @@ fn camera_look_system(
     // prevent flipping
     look.pitch = look.pitch.clamp(-1.54, 1.54);
 
-    transform.rotation =
+    // transform_cam.rotate_local_y(look.yaw);
+    // transform_cam.rotate_local_x(look.pitch);
+    transform_cam.rotation =
         Quat::from_axis_angle(Vec3::Y, look.yaw)
         * Quat::from_axis_angle(Vec3::X, look.pitch);
 }

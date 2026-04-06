@@ -10,6 +10,7 @@ mod input;
 mod android;
 mod move_camera;
 mod dev;
+mod other_sppd;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
 pub enum GameState {
@@ -17,7 +18,7 @@ pub enum GameState {
     InUI, // Player is in User interface, do not spawn anything yet (except buttons)
     OpeningPack, // Player is oppening the pack that is in ressource
     DevPlayground,
-    Battling, // TODO implement
+    OtherSppd, // TODO implement
     Binder, // TODO implement
     DeckBuilder, // TODO implement
     HomeScreen, // TODO implement
@@ -52,14 +53,7 @@ pub fn main() {
             android::AndroidPlugin,
             dev::dev_playground::DevPlaygroundPlugin,
             move_camera::CameraControllerPlugin,
+            other_sppd::other_sppd::OtherSPPDPlugin,
         ))
         .run();
-}
-
-
-#[derive(Component)]
-enum MenuButton {
-    OpenPack,
-    DevPlayground,
-    InUI,
 }

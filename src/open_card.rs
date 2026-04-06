@@ -11,14 +11,14 @@ use std::{f32::consts::*, time::Duration};
 
 use bevy_tweening::{Lens, Tween, TweenAnim, TweeningPlugin};
 
-use crate::{GameState, MenuButton};
+use crate::GameState;
 
 
 // An example asset that contains a mesh and animation.
 // const GLTF_PATH: &str = "models/card_pack.gltf";
 // const GLTF_PATH: &str = "models/test_cube_animation.glb";
 // const GLTF_PATH: &str = "models/GenerickPack2.glb";
-const GLTF_PATH: &str = "models/GenerickPack4.gltf";
+// const GLTF_PATH: &str = "models/GenerickPack4.gltf";
 // const CARD_PATH: &str = "models/card_base_model.gltf";
 const _CUBE_PATH_16: &str = "models/cubeScale16.gltf";
 const _CUBE_PATH_01: &str = "models/cubeScale1.gltf";
@@ -132,9 +132,9 @@ fn spawn_card_pack(
     mut graphs: ResMut<Assets<AnimationGraph>>,
     
     mut meshes:    ResMut<Assets<Mesh>>,
-    mut materials_color: ResMut<Assets<ColorMaterial>>,
+    // mut materials_color: ResMut<Assets<ColorMaterial>>,
 
-    mut animation_players: Query<(Entity, &mut AnimationPlayer)>,
+    // mut animation_players: Query<(Entity, &mut AnimationPlayer)>,
     mut materials_standard: ResMut<Assets<StandardMaterial>>,
 ) {
     // Build the animation graph
@@ -332,7 +332,6 @@ fn spawn_return_back_to_ui_button(
     commands
         .spawn((
             Button,
-            MenuButton::InUI,
             DespawnOnExit(GameState::OpeningPack),
             Node {
                 justify_content: JustifyContent::Center,

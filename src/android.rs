@@ -3,7 +3,7 @@ use bevy::prelude::*;
 // Platform     | Support of new Blockbench's armatures feature
 // -------------|-------------------------------
 // Windows/x86  | ✅ Yes
-// Android/arm  | ❌ No (Gltf/glb loads, armatured elements don't show up)
+// Android/arm  | ❌ No (Gltf/glb loads, armatured elements won't show up)
 
 use bevy::window::AppLifecycle;
 use bevy::winit::WinitSettings;
@@ -21,6 +21,7 @@ impl Plugin for AndroidPlugin {
                     // Only run the lifetime handler when an [`AudioSink`] component exists in the world.
                     // This ensures we don't try to manage audio that hasn't been initialized yet.
                     handle_lifetime.run_if(any_with_component::<AudioSink>),
+                    move_camera,
                 ),
             )
             ;
@@ -40,5 +41,38 @@ fn handle_lifetime(
             AppLifecycle::Suspended => music_controller.pause(),
             AppLifecycle::Running => music_controller.play(),
         }
+    }
+}
+
+
+
+
+fn move_camera(
+    window: Single<&Window>,
+    mut touch_inputs: MessageReader<TouchInput>,
+    mut camera_transform: Single<&mut Transform, (With<Camera3d>, Without<CameraLocked>)>,
+    mut last_position: Local<Option<Vec2>>,
+    mut rotation_gestures: MessageReader<RotationGesture>,
+) {
+    for touch_input in touch_inputs.read() {
+        if touch_input.phase == TouchPhase::Started {
+            *last_position = None;
+        }
+        if let Some(last_position) = *last_position {
+            **camera_transform = Transform::from_xyz(
+                camera_transform.translation.x
+                    + (touch_input.position.x - last_position.x) / window.width() * 5.0,
+                camera_transform.translation.y,
+                camera_transform.translation.z
+                    + (touch_input.position.y - last_position.y) / window.height() * 5.0,
+            )
+            .looking_at(Vec3::ZERO, Vec3::Y);
+        }
+        *last_position = Some(touch_input.position);
+    }
+    // Rotation gestures only work on iOS
+    for rotation_gesture in rotation_gestures.read() {
+        let forward = camera_transform.forward();
+        camera_transform.rotate_axis(forward, rotation_gesture.0 / 10.0);
     }
 }
