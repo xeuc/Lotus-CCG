@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{camera_controller::free_camera::FreeCamera, prelude::*};
 use crate::{GameState, dev::components::*};
 
 
@@ -24,13 +24,20 @@ pub fn spawn_camera(mut commands: Commands) {
     // Spawn camera
     commands.spawn((
         DespawnOnExit(GameState::DevPlayground),
-        CameraLocked,
         Camera3d::default(),
         Projection::Perspective(PerspectiveProjection {
-            fov: std::f32::consts::FRAC_PI_2,
+            fov: std::f32::consts::FRAC_PI_4,
             ..default()
         }),
         Transform::from_xyz(-10.0, 35.0, 10.0),
+        // FreeCamera { // set by button xoxo
+        //     sensitivity: 0.2,
+        //     friction: 25.0,
+        //     walk_speed: 3.0,
+        //     run_speed: 9.0,
+        //     ..default()
+        // },
+
     ));
 }
 

@@ -1,7 +1,7 @@
 
 use std::f32::consts::PI;
 
-use bevy::{color::palettes::basic::*, prelude::*};
+use bevy::{camera_controller::free_camera::FreeCamera, color::palettes::basic::*, prelude::*};
 use crate::{GameState, dev::components::*};
 
 
@@ -160,12 +160,23 @@ pub fn set_bg_on<E: EntityEvent>(
         }
     }
 }
-pub fn lock_cam<E: EntityEvent>() -> impl FnMut(On<E>, Commands, Single<Entity, (With<Camera3d>, Without<CameraLocked>)>) {
-    move |_, mut commands, cam| { commands.entity(*cam).insert(CameraLocked); }
+pub fn lock_cam<E: EntityEvent>() -> impl FnMut(On<E>, Commands, Single<Entity, (With<Camera3d>, With<FreeCamera>)>) {
+    move |_, mut commands, cam| {
+        // commands.entity(*cam).insert(CameraLocked);
+        commands.entity(*cam).remove::<FreeCamera>();
+    }
 }
-
-pub fn unlock_cam<E: EntityEvent>() -> impl FnMut(On<E>, Commands, Single<Entity, (With<Camera3d>, With<CameraLocked>)>) {
-    move |_, mut commands, cam| { commands.entity(*cam).remove::<CameraLocked>(); }
+pub fn unlock_cam<E: EntityEvent>() -> impl FnMut(On<E>, Commands, Single<Entity, (With<Camera3d>, Without<FreeCamera>)>) {
+    move |_, mut commands, cam| { 
+        // commands.entity(*cam).remove::<CameraLocked>();
+        commands.entity(*cam).insert(FreeCamera {
+            sensitivity: 0.2,
+            friction: 25.0,
+            walk_speed: 3.0,
+            run_speed: 9.0,
+            ..default()
+        });
+    }
 }
 
 pub fn set_game_state_on<E: EntityEvent>(
