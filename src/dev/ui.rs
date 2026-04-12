@@ -40,7 +40,7 @@ pub fn spawn_buttons(mut commands: Commands) {
                 TextLayout::new_with_justify(Justify::Center),
                 BackgroundColor(WHITE.into()),
             ))
-            .observe(set_game_state_on::<Pointer<Press>>(GameState::InUI))
+            .observe(set_game_state_on::<Pointer<Press>>(GameState::DevPlayground))
             .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
             .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
             .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
@@ -68,7 +68,7 @@ pub fn spawn_buttons(mut commands: Commands) {
             // Look Right
             parent.spawn((
                 Button,
-                Text::new("LookRight"),
+                Text::new("=>"),
                 TextFont { font_size: 30.0, ..default() },
                 TextColor::BLACK,
                 TextLayout::new_with_justify(Justify::Center),
@@ -86,7 +86,7 @@ pub fn spawn_buttons(mut commands: Commands) {
             // Look left 
             parent.spawn((
                 Button,
-                Text::new("LookLeft"),
+                Text::new("<="),
                 TextFont { font_size: 30.0, ..default() },
                 TextColor::BLACK,
                 TextLayout::new_with_justify(Justify::Center),
@@ -94,6 +94,40 @@ pub fn spawn_buttons(mut commands: Commands) {
             Pickable { should_block_lower: true, is_hoverable: true },
             ))
             .observe(look_left_on::<Pointer<Press>>())
+            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
+            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
+            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
+            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
+            ;
+
+            // Look Up 
+            parent.spawn((
+                Button,
+                Text::new("/\\\n||"),
+                TextFont { font_size: 30.0, ..default() },
+                TextColor::BLACK,
+                TextLayout::new_with_justify(Justify::Center),
+                BackgroundColor(WHITE.into()),
+            Pickable { should_block_lower: true, is_hoverable: true },
+            ))
+            .observe(look_up_on::<Pointer<Press>>())
+            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
+            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
+            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
+            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
+            ;
+
+            // Look Down
+            parent.spawn((
+                Button,
+                Text::new("||\nV"),
+                TextFont { font_size: 30.0, ..default() },
+                TextColor::BLACK,
+                TextLayout::new_with_justify(Justify::Center),
+                BackgroundColor(WHITE.into()),
+            Pickable { should_block_lower: true, is_hoverable: true },
+            ))
+            .observe(look_down_on::<Pointer<Press>>())
             .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
             .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
             .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
@@ -280,6 +314,28 @@ pub fn set_game_state_on<E: EntityEvent>(
     new_state: GameState,
 ) -> impl Fn(On<E>, ResMut<NextState<GameState>>) {
     move |_, mut next| { next.set(new_state); }
+}
+
+pub fn look_down_on<E: EntityEvent>() -> impl Fn(On<E>, ResMut<NextState<GameState>>, Single<&Transform, With<Camera3d>>) {
+    move |_, mut next, cam| {
+        if cam.rotation.y < 0.0001 {
+            // pve
+            next.set(GameState::OtherSppd);
+
+        } else if cam.rotation.y < 0.0 {
+            // Binder
+            next.set(GameState::Binder);
+
+        } else {
+            // open pack
+            next.set(GameState::OpeningPack2);
+        }
+    }
+}
+
+
+pub fn look_up_on<E: EntityEvent>() -> impl Fn(On<E>) {
+    move |_| {}
 }
 
 pub fn send_swipe_on<E: EntityEvent>() -> impl FnMut(On<E>, MessageWriter<SwipeEvent>) {

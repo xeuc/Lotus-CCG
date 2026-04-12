@@ -22,7 +22,6 @@ impl Plugin for OtherSPPDPlugin {
                 // init green field~
                 setup_scene,
                 // ui
-                setup_ui,
                 spawn_buttons,
                 setup,
             ))

@@ -31,7 +31,7 @@ pub fn spawn_camera(mut commands: Commands) {
         }),
         Transform::default()
             .with_translation(Vec3::new(-11.97946834564209, 30.476943969726563, 4.821719646453857))
-            .with_rotation(Quat::from_xyzw(0.0, -0.7071067094802856, 0.0, 0.7071067094802856))
+            .with_rotation(Quat::from_xyzw(0.0, 0.7071067094802856, 0.0, 0.7071067094802856))
             .with_scale(Vec3::new(1.0, 1.0, 1.0)),
 // 2026-04-11T14:00:25.174304Z  INFO lotus_ccg::dev::ui: cam_trans_quer.translation.x=-11.97946834564209
 // 2026-04-11T14:00:25.174609Z  INFO lotus_ccg::dev::ui: cam_trans_quer.translation.y=30.476943969726563

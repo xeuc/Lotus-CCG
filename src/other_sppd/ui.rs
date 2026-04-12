@@ -8,32 +8,12 @@ use bevy::{
 
 use crate::GameState;
 
-pub fn setup_ui(
-    mut commands: Commands,
-) {
-    // Instructions
-    commands.spawn((
-        DespawnOnExit(GameState::OtherSppd),
-        Text::new("Left  Click to create a Blue ball that goes right
-Right Click to create a Red  ball that goes left
-Green circle is detection range
-Yellow circle is attack range
-Red circle is size range (hitbox or hitball lol)
-If balls of different teams encounter, they will attack each others"),
-        Node {
-            position_type: PositionType::Absolute,
-            top: px(12),
-            left: px(12),
-            ..default()
-        },
-    ));
-}
-
 
 pub fn spawn_buttons(mut commands: Commands) {
     commands
         .spawn((
             DespawnOnExit(GameState::DevPlayground),
+            Pickable { should_block_lower: false, is_hoverable: false },
             Node {
                 display: Display::Flex,
                 flex_direction: FlexDirection::RowReverse,
@@ -60,7 +40,7 @@ pub fn spawn_buttons(mut commands: Commands) {
                 TextLayout::new_with_justify(Justify::Center),
                 BackgroundColor(WHITE.into()),
             ))
-            .observe(set_game_state_on::<Pointer<Press>>(GameState::InUI))
+            .observe(set_game_state_on::<Pointer<Press>>(GameState::DevPlayground))
             .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
             .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
             .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))

@@ -12,7 +12,8 @@ pub fn spawn_ball(
     mut mats: ResMut<Assets<StandardMaterial>>
 ) {
     let pos = event.hit.position.unwrap();
-    let right_click = event.button == PointerButton::Primary;
+    // let right_click = event.button == PointerButton::Primary;
+    let right_click = pos.x < 0.0;
     let hover_matl = mats.add(Color::from(CYAN_300));
     let pressed_matl = mats.add(Color::from(YELLOW_300));
     let red = mats.add(Color::srgb(0.8, 0.1, 0.2));

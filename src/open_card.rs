@@ -53,39 +53,6 @@ impl Plugin for OpenCardPlugin {
     }
 }
 
-fn _spawn_cube(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    // Blockbench Scale 01
-    commands.spawn((
-        DespawnOnExit(GameState::OpeningPack),
-        SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(_CUBE_PATH_01),)),
-        Transform::from_translation(vec3(-0.5, 0.0, 0.0)),
-    ));
-
-    // Bevy Cube
-    commands.spawn((
-        DespawnOnExit(GameState::OpeningPack),
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(
-            materials.add(StandardMaterial {
-                base_color: Color::WHITE,
-                // alpha_mode: AlphaMode::Mask(0.5),
-                // metallic: 0.0,
-                // perceptual_roughness: 1.0,
-                ..default()
-            })
-        ),
-        // RotateY,
-        Transform::from_translation(vec3(0.5, 0.5, 0.0)),
-        // TweenAnim::new(tween3),
-    ));
-}
-
-
 
 
 fn spawn_camera(mut commands: Commands) {

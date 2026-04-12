@@ -1,21 +1,23 @@
-//! A 3d Scene with a button and playing sound.
 use bevy::{light::DirectionalLightShadowMap, prelude::*};
-// cargo ndk -t arm64-v8a -o android_example/app/src/main/jniLibs build
 use bevy::camera_controller::free_camera::{FreeCamera, FreeCameraPlugin, FreeCameraState};
 
+
+
 mod user_interface;
+mod open_pack;
 mod open_card;
-mod audio;
 #[cfg(target_os = "android")]
 mod android;
 mod dev;
 mod other_sppd;
+mod core;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
 pub enum GameState {
-    #[default]
     InUI, // Player is in User interface, do not spawn anything yet (except buttons)
     OpeningPack, // Player is oppening the pack that is in ressource
+    OpeningPack2,
+    #[default]
     DevPlayground,
     OtherSppd, // TODO implement
     Binder, // TODO implement
@@ -42,10 +44,12 @@ pub fn main() {
         .init_state::<GameState>()
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
         .add_plugins((
-            // audio::_AudioPlugin,
+            core::audio::AudioPlugin,
+
             FreeCameraPlugin,
             user_interface::UIPlugin,
             open_card::OpenCardPlugin,
+            open_pack::open_pack::OpenPackPlugin,
             
             #[cfg(target_os = "android")]
             android::AndroidPlugin,
