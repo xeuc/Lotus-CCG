@@ -1,3 +1,6 @@
+use std::fs;
+use std::path::PathBuf;
+
 use bevy::{light::DirectionalLightShadowMap, prelude::*};
 use bevy::camera_controller::free_camera::{FreeCamera, FreeCameraPlugin, FreeCameraState};
 
@@ -56,5 +59,68 @@ pub fn main() {
             dev::dev_playground::DevPlaygroundPlugin,
             other_sppd::other_sppd::OtherSPPDPlugin,
         ))
+        .add_systems(Startup, test_save_system)
         .run();
 }
+
+use std::io::{Read, Write};
+
+
+#[cfg(target_os = "android")]
+use winit::platform::android::activity::AndroidApp;
+
+fn save_system(
+    #[cfg(target_os = "android")]
+    android_app: bevy::ecs::system::NonSend<AndroidApp>,
+) {
+    #[cfg(target_os = "android")]
+    {
+        // let internal_path: PathBuf = android_app.internal_data_path().to_path_buf();
+        let internal_path: PathBuf = android_app
+            .internal_data_path()
+            .expect("No internal data path");
+        let file_path = internal_path.join("save.txt");
+
+        if file_path.exists() {
+            let mut file2 = fs::File::open(&file_path).unwrap();
+            let mut content = String::new();
+            file2.read_to_string(&mut content).unwrap();
+            info!("Loaded save: {}", content);
+        } else {
+            info!("No save found, creating one...");
+        }+
+
+        let new_data = format!("Saved at: {:?}", std::time::SystemTime::now());
+        let mut file2 = fs::File::create(&file_path).unwrap();
+        file2.write_all(new_data.as_bytes()).unwrap();
+        info!("Saved new data!");
+    }
+
+}
+
+use directories::ProjectDirs;
+
+fn test_save_system() {
+    // org.bevyengine.Lotus_CCG
+    if let Some(proj_dirs) = ProjectDirs::from("org", "bevyengine", "Lotus_CCG") {
+        let dir = proj_dirs.data_dir();
+
+        fs::create_dir_all(dir).ok();
+
+        let file = dir.join("save.txt");
+
+        if file.exists() {
+            let content = fs::read_to_string(&file).unwrap();
+            println!("Loaded: {}", content);
+        } else {
+            println!("No save found");
+        }
+
+        let data = format!("Saved at: {:?}", std::time::SystemTime::now());
+        fs::write(file, data).unwrap();
+
+        println!("Saved!");
+    }
+}
+
+
