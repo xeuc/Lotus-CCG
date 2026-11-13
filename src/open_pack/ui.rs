@@ -22,7 +22,7 @@ pub fn spawn_return_button(mut commands: Commands) {
                 ..default()
             },
         ))
-        .observe(set_game_state_on::<Pointer<Press>>(GameState::DevPlayground))
+        .observe(set_game_state_on::<Pointer<Press>>(GameState::PackShowcase))
         .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
         .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
         .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))

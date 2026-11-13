@@ -1,241 +1,161 @@
-
 use std::f32::consts::PI;
-use std::fs;
-use std::path::PathBuf;
 
-use bevy::{camera_controller::free_camera::FreeCamera, color::palettes::basic::*, prelude::*};
-use crate::{GameState, dev::components::*};
+use bevy::{color::palettes::basic::*, prelude::*};
 
+use crate::{
+    GameState,
+    gameplay::PlayerProgress,
+    user_interface::STATUS_BAR_HEIGHT,
+};
 
-use crate::dev::dev_playground::*;
-use crate::dev::*;
-
-// =============================================================================
-// UI
-// =============================================================================
+#[derive(Component)]
+pub(super) struct StatusStats;
 
 pub fn spawn_buttons(mut commands: Commands) {
     commands
         .spawn((
-            DespawnOnExit(GameState::DevPlayground),
-            Pickable { should_block_lower: false, is_hoverable: false }, // omg this does smtg => no
+            DespawnOnExit(GameState::PackShowcase),
+            Pickable {
+                should_block_lower: false,
+                is_hoverable: false,
+            },
             Node {
                 display: Display::Flex,
+                position_type: PositionType::Absolute,
+                left: px(20),
+                right: px(20),
+                bottom: px(20),
                 flex_direction: FlexDirection::RowReverse,
-                flex_wrap: FlexWrap::WrapReverse,
-                align_content: AlignContent::FlexStart,
-                row_gap: px(10),
-                column_gap: px(10),
-                height: percent(100),
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
                 ..default()
             },
         ))
-        .with_children(|parent | {
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    Button,
+                    Text::new("=>"),
+                    TextFont {
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor::BLACK,
+                    TextLayout::new_with_justify(Justify::Center),
+                    BackgroundColor(WHITE.into()),
+                    Pickable {
+                        should_block_lower: true,
+                        is_hoverable: true,
+                    },
+                ))
+                .observe(look_right_on::<Pointer<Press>>())
+                .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
+                .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
+                .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
+                .observe(set_bg_on::<Pointer<Out>>(WHITE.into()));
 
-            // Return button
-            parent.spawn((
-                Button,
-                Text::new("Exit"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            ))
-            .observe(close_app_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
+            parent
+                .spawn((
+                    Button,
+                    Text::new("<="),
+                    TextFont {
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor::BLACK,
+                    TextLayout::new_with_justify(Justify::Center),
+                    BackgroundColor(WHITE.into()),
+                    Pickable {
+                        should_block_lower: true,
+                        is_hoverable: true,
+                    },
+                ))
+                .observe(look_left_on::<Pointer<Press>>())
+                .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
+                .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
+                .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
+                .observe(set_bg_on::<Pointer<Out>>(WHITE.into()));
+        });
 
+    commands
+        .spawn((
+            DespawnOnExit(GameState::PackShowcase),
+            Node {
+                position_type: PositionType::Absolute,
+                left: px(0),
+                right: px(0),
+                top: px(0),
+                height: px(STATUS_BAR_HEIGHT),
+                padding: UiRect::horizontal(px(10)),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.36, 0.18, 0.08)),
+        ))
+        .with_children(|bar| {
+            bar.spawn((
+                Text::new("01:23"),
+                TextFont {
+                    font_size: 15.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
 
-            // Swipe
-            parent.spawn((
-                Button,
-                Text::new("Swipe?"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(send_swipe_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // Look Right
-            parent.spawn((
-                Button,
-                Text::new("=>"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(look_right_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-
-            // Look left 
-            parent.spawn((
-                Button,
-                Text::new("<="),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(look_left_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // Look Up 
-            parent.spawn((
-                Button,
-                Text::new("/\\\n||"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(look_up_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // Look Down
-            parent.spawn((
-                Button,
-                Text::new("||\nV"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(look_down_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // Lock cam
-            parent.spawn((
-                Button,
-                Text::new("LockCam"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(lock_cam::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // UnLock cam
-            parent.spawn((
-                Button,
-                Text::new("UnLockCam"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(unlock_cam::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // print Camera info
-            parent.spawn((
-                Button,
-                Text::new("PrintCam"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(print_cam::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // pause game
-            parent.spawn((
-                Button,
-                Text::new("PauseGame"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(pause_game_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-            // Write file
-            parent.spawn((
-                Button,
-                Text::new("WriteToFile"),
-                TextFont { font_size: 30.0, ..default() },
-                TextColor::BLACK,
-                TextLayout::new_with_justify(Justify::Center),
-                BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-            ))
-            .observe(write_file_on::<Pointer<Press>>())
-            .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-            .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-            .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-            ;
-
-
+            bar.spawn((
+                Text::new(""),
+                StatusStats,
+                TextFont {
+                    font_size: 13.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
         });
 }
 
+pub(super) fn update_status_bar(
+    progress: Res<PlayerProgress>,
+    mut texts: Query<&mut Text, With<StatusStats>>,
+) {
+    let status = format!(
+        "P{}   Karma {} {:.0}%   {}",
+        progress.prestige().points(),
+        karma_face(progress.karma()),
+        progress.karma().percent(),
+        format_money(progress.money().balance()),
+    );
 
+    for mut text in &mut texts {
+        if text.0 != status {
+            text.0.clone_from(&status);
+        }
+    }
+}
 
+fn karma_face(karma: crate::gameplay::Karma) -> &'static str {
+    match karma.percent() {
+        value if value >= 67.0 => ":)",
+        value if value >= 34.0 => ":/",
+        _ => ":(",
+    }
+}
 
-// =============================================================================
-// UI HELPERS
-// =============================================================================
+fn format_money(amount: u64) -> String {
+    let digits = amount.to_string();
+    let mut formatted = String::with_capacity(digits.len() + digits.len() / 3);
+    for (index, digit) in digits.chars().enumerate() {
+        if index > 0 && (digits.len() - index) % 3 == 0 {
+            formatted.push('.');
+        }
+        formatted.push(digit);
+    }
+    formatted.push('$');
+    formatted
+}
 
-// pub fn set_bg_on<E: EntityEvent>(
-//     color: BackgroundColor,
-// ) -> impl Fn(On<E>, Single<&mut BackgroundColor>) {
-//     move |_, mut query| { **query = color.clone(); }
-// }
 pub fn set_bg_on<E: EntityEvent>(
     color: BackgroundColor,
 ) -> impl Fn(On<E>, Query<&mut BackgroundColor>) {
@@ -245,174 +165,29 @@ pub fn set_bg_on<E: EntityEvent>(
         }
     }
 }
-pub fn lock_cam<E: EntityEvent>() -> impl FnMut(On<E>, Commands, Single<Entity, (With<Camera3d>, With<FreeCamera>)>) {
-    move |_, mut commands, cam| {
-        // commands.entity(*cam).insert(CameraLocked);
-        commands.entity(*cam).remove::<FreeCamera>();
-    }
-}
-pub fn unlock_cam<E: EntityEvent>() -> impl FnMut(On<E>, Commands, Single<Entity, (With<Camera3d>, Without<FreeCamera>)>) {
-    move |_, mut commands, cam| { 
-        // commands.entity(*cam).remove::<CameraLocked>();
-        commands.entity(*cam).insert(FreeCamera {
-            sensitivity: 0.2,
-            friction: 25.0,
-            walk_speed: 3.0,
-            run_speed: 9.0,
-            ..default()
-        });
-    }
-}
-
-pub fn pause_game_on<E: EntityEvent>() -> impl FnMut(On<E>, Commands, ResMut<NextState<IsPaused>>) {
-    move |_, mut commands, mut next_state| {
-        // create a substate pause so that you sdon't despawn all curent buttons
-        // commands.spawn() a big button "unpause" at the middle of the screen
-        // That will revert back the state
-        // that button would have a Despawn on Exit (SUBSTATE_PAUSE) <= never done before
-        next_state.set(IsPaused::Paused);
-        
-    
-        commands.spawn((
-            DespawnOnExit(IsPaused::Paused),
-            Button,
-            Node {
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                position_type: PositionType::Absolute,
-                left: percent(50),
-                top: percent(50),
-                ..default()
-            },
-            BackgroundColor(WHITE.into()),
-            Pickable { should_block_lower: true, is_hoverable: true },
-        ))
-        .observe(unpause_game_on::<Pointer<Press>>())
-        .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-        .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-        .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-        .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-        .with_child((
-            Text::new("UNPAUSE"),
-            TextFont { font_size: 30.0, ..default() },
-            TextColor::BLACK,
-            TextLayout::new_with_justify(Justify::Center),
-        ));
-    }
-}
-
-
-pub fn unpause_game_on<E: EntityEvent>() -> impl FnMut(On<E>, ResMut<NextState<IsPaused>>) {
-    move |_, mut next_state| {
-        // create a substate pause so that you sdon't despawn all curent buttons
-        // commands.spawn() a big button "unpause" at the middle of the screen
-        // That will revert back the state
-        // that button would have a Despawn on Exit (SUBSTATE_PAUSE) <= never done before
-        next_state.set(IsPaused::Running);
-        
-    }
-}
-
-pub fn print_cam<E: EntityEvent>() -> impl FnMut(On<E>, Single<&Transform, With<Camera3d>>) {
-    move |_, cam_trans_quer| {
-        info!(cam_trans_quer.translation.x);
-        info!(cam_trans_quer.translation.y);
-        info!(cam_trans_quer.translation.z);
-        info!(cam_trans_quer.rotation.x);
-        info!(cam_trans_quer.rotation.y);
-        info!(cam_trans_quer.rotation.z);
-        info!(cam_trans_quer.scale.x);
-        info!(cam_trans_quer.scale.y);
-        info!(cam_trans_quer.scale.z);
-    }
-}
-
-
-pub fn set_game_state_on<E: EntityEvent>(
-    new_state: GameState,
-) -> impl Fn(On<E>, ResMut<NextState<GameState>>) {
-    move |_, mut next| { next.set(new_state); }
-}
-
-pub fn look_down_on<E: EntityEvent>() -> impl Fn(On<E>, ResMut<NextState<GameState>>, Single<&Transform, With<Camera3d>>) {
-    move |_, mut next, cam| {
-        if cam.rotation.y < 0.0001 {
-            // pve
-            next.set(GameState::OtherSppd);
-
-        } else if cam.rotation.y < 0.0 {
-            // Binder
-            next.set(GameState::Binder);
-
-        } else {
-            // open pack
-            next.set(GameState::OpeningPack2);
-        }
-    }
-}
-
-
-pub fn look_up_on<E: EntityEvent>() -> impl Fn(On<E>) {
-    move |_| {}
-}
-
-pub fn send_swipe_on<E: EntityEvent>() -> impl FnMut(On<E>, MessageWriter<SwipeEvent>) {
-    move |_, mut sw: MessageWriter<SwipeEvent>| { sw.write(SwipeEvent); }
-}
-
 
 pub fn look_left_on<E: EntityEvent>() -> impl FnMut(On<E>, Single<&mut Transform, With<Camera3d>>) {
-    move |_, mut cam_trans_quer| { cam_trans_quer.rotate_y(PI/2.0) }
+    move |_, mut cam_transform| cam_transform.rotate_y(PI / 2.0)
 }
 
 pub fn look_right_on<E: EntityEvent>() -> impl FnMut(On<E>, Single<&mut Transform, With<Camera3d>>) {
-    move |_, mut cam_trans_quer| { cam_trans_quer.rotate_y(-PI/2.0) }
+    move |_, mut cam_transform| cam_transform.rotate_y(-PI / 2.0)
 }
 
-pub fn close_app_on<E: EntityEvent>() -> impl Fn(On<E>, MessageWriter<AppExit>) {
-    move |_, mut app_exit_events| { app_exit_events.write(AppExit::Success); }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gameplay::Karma;
 
+    #[test]
+    fn hud_formats_money_with_dot_grouping() {
+        assert_eq!(format_money(153_789), "153.789$");
+    }
 
-
-
-
-pub fn write_file_on<E: EntityEvent>() -> impl Fn(On<E>) {
-    move |_| {
-        #[cfg(target_os = "android")]
-        let data_path: PathBuf = {
-            let android_app = bevy::android::ANDROID_APP
-                .get()
-                .expect("Bevy must be setup with the #[bevy_main] macro on Android");
-            android_app
-                .internal_data_path()
-                .expect("App has no data path")
-        };
-        #[cfg(not(target_os = "android"))]
-        let data_path: PathBuf = PathBuf::from(".");
-
-        let savefile_path = data_path.join("save.txt");
-        println!("LOTUSDEBUG: Path to write file is: {}", savefile_path.display());
-
-        // Read
-        if savefile_path.exists() {
-            match fs::read_to_string(&savefile_path) {
-                Ok(content) => println!("LOTUSDEBUG: File loaded: {}", content),
-                Err(e) => println!("LOTUSDEBUG: Error loading file: {}", e),
-            }
-        } else {
-            println!("LOTUSDEBUG: NO EXISTING SAVE");
-        }
-
-        // Write
-        let data = format!("{:?}", std::time::SystemTime::now());
-        println!("LOTUSDEBUG: Data to write: {}", data);
-        match fs::write(&savefile_path, &data) {
-            Ok(_) => println!("LOTUSDEBUG: data written"),
-            Err(e) => println!("LOTUSDEBUG: Data not written: {}", e),
-        }
+    #[test]
+    fn hud_uses_face_for_karma_range() {
+        assert_eq!(karma_face(Karma::new(80.0).unwrap()), ":)");
+        assert_eq!(karma_face(Karma::new(50.0).unwrap()), ":/");
+        assert_eq!(karma_face(Karma::new(20.0).unwrap()), ":(");
     }
 }
-
-
-

@@ -1,4 +1,4 @@
-use bevy::{color::palettes::basic::*, prelude::*};
+use bevy::prelude::*;
 
 
 // =============================================================================
@@ -86,7 +86,6 @@ pub struct NextBatchId(pub(crate) u32);
 #[derive(Clone, Copy, Debug, Default)]
 pub enum Easing {
     #[default] Linear,
-    EaseIn,
     EaseOut,
     EaseInOut,
     /// Overshoots then snaps back — springy landing feel.
@@ -99,7 +98,6 @@ impl Easing {
         let t = t.clamp(0.0, 1.0);
         match self {
             Easing::Linear    => t,
-            Easing::EaseIn    => t * t * t,
             Easing::EaseOut   => 1.0 - (1.0 - t).powi(3),
             Easing::EaseInOut => {
                 if t < 0.5 { 4.0 * t * t * t }

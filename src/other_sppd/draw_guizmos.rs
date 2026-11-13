@@ -5,39 +5,6 @@ use bevy::math::Isometry3d;
 use bevy::color::palettes::tailwind::*;
 use crate::other_sppd::components::*;
 
-pub fn _draw_gizmos_system(
-    mut gizmos: Gizmos,
-    query: Query<(&Transform, &AttackRange, &DetectionRange), With<Shape>>,
-) {
-    for (transform, attack_range, detection_range) in &query {
-        let ground_up = Vec3::Y;
-
-        let isometry = Isometry3d::new(
-            transform.translation + ground_up * 0.01,
-            Quat::from_rotation_arc(Vec3::Z, ground_up),
-        );
-
-        gizmos.circle(
-            isometry,
-            transform.scale.x / 2.0,
-            Color::srgb(0.9, 0.0, 0.1),
-        );
-
-        gizmos.circle(
-            isometry,
-            attack_range.0,
-            Color::srgb(0.7, 0.7, 0.1),
-        );
-
-        gizmos.circle(
-            isometry,
-            detection_range.0,
-            Color::srgb(0.0, 0.8, 0.3),
-        );
-    }
-}
-
-
 pub fn draw_gizmos_system(
     mut gizmos: Gizmos,
     query: Query<(

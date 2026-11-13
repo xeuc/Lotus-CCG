@@ -10,6 +10,8 @@ dependencies = [
  "bevy_tweening",
  "directories",
  "rand 0.10.0",
+ "serde",
+ "serde_json",
  "winit",
 ]
 

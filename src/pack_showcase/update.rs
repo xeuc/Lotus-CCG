@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::dev::components::*;
+use crate::pack_showcase::components::*;
 
 
 // =============================================================================
@@ -27,8 +27,8 @@ pub fn tick_transform_tweens(
     }
 }
 
-/// Runs after tick_transform_tweens. If both tweens exist on the same entity
-/// (swipe during a card rise), the arc translation writes last and wins.
+/// Runs after tick_transform_tweens. If both tweens exist on the same entity,
+/// the arc translation writes last and wins.
 pub fn tick_arc_tweens(
     mut commands: Commands,
     time:         Res<Time>,
@@ -47,20 +47,5 @@ pub fn tick_arc_tweens(
             commands.entity(entity).remove::<ArcTween>();
             commands.trigger(TweenBatchDone { batch_id });
         }
-    }
-}
-
-// =============================================================================
-// INPUT DISPATCH
-// =============================================================================
-
-/// The only system aware that a Pack entity exists.
-/// Reads buffered SwipeEvent messages and fires a global PlayerSwiped trigger.
-pub fn dispatch_swipe(
-    mut commands: Commands,
-    mut swipe_r:  MessageReader<SwipeEvent>,
-) {
-    if swipe_r.read().count() > 0 {
-        commands.trigger(PlayerSwiped);
     }
 }

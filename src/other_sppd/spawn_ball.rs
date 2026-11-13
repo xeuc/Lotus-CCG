@@ -12,7 +12,6 @@ pub fn spawn_ball(
     mut mats: ResMut<Assets<StandardMaterial>>
 ) {
     let pos = event.hit.position.unwrap();
-    // let right_click = event.button == PointerButton::Primary;
     let right_click = pos.x < 0.0;
     let hover_matl = mats.add(Color::from(CYAN_300));
     let pressed_matl = mats.add(Color::from(YELLOW_300));
@@ -33,8 +32,8 @@ pub fn spawn_ball(
     let life = rng.random_range(10.0..15.0);
     let atk = rng.random_range(1.0..2.0);
     let atk_cooldown = rng.random_range(0.8..1.2);
-    let _dir = if right_click { 1.0 } else { -1.0 };
-    let _entity = cmds.spawn((
+    let direction = if right_click { 1.0 } else { -1.0 };
+    cmds.spawn((
         Shape,
         Mesh3d(meshes.add(Sphere::default().mesh().ico(5).unwrap())),
         MeshMaterial3d(original_material.clone()),
@@ -48,20 +47,15 @@ pub fn spawn_ball(
         AttackCooldown {
             timer: Timer::from_seconds(atk_cooldown, TimerMode::Repeating),
         },
-        Idle(_dir),
+        Idle(direction),
     ))
         .observe(mark_hover::<Pointer<Over>>())
         .observe(unmark_hover::<Pointer<Out>>())
-        // .observe(update_material_on::<Pointer<Over>>(hover_matl.clone()))
-        // .observe(update_material_on::<Pointer<Out>>(original_material.clone()))
         .observe(update_material_on::<Pointer<Press>>(pressed_matl.clone()))
-        .observe(update_material_on::<Pointer<Release>>(hover_matl.clone()))
-        // .observe(rotate_on_drag)
-        .id();
+        .observe(update_material_on::<Pointer<Release>>(hover_matl.clone()));
 
 }
 
-// TO REMOVE LATER
 /// Returns an observer that updates the entity's material to the one specified.
 fn update_material_on<E: EntityEvent>(
     new_material: Handle<StandardMaterial>,

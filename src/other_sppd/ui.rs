@@ -12,7 +12,7 @@ use crate::GameState;
 pub fn spawn_buttons(mut commands: Commands) {
     commands
         .spawn((
-            DespawnOnExit(GameState::DevPlayground),
+            DespawnOnExit(GameState::PackShowcase),
             Pickable { should_block_lower: false, is_hoverable: false },
             Node {
                 display: Display::Flex,
@@ -40,7 +40,7 @@ pub fn spawn_buttons(mut commands: Commands) {
                 TextLayout::new_with_justify(Justify::Center),
                 BackgroundColor(WHITE.into()),
             ))
-            .observe(set_game_state_on::<Pointer<Press>>(GameState::DevPlayground))
+            .observe(set_game_state_on::<Pointer<Press>>(GameState::PackShowcase))
             .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
             .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
             .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))

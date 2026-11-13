@@ -6,16 +6,6 @@ use bevy::prelude::*;
 // EVENTS AND TRIGGERS
 // =============================================================================
 
-/// Buffered message produced by the swipe button or a touch recogniser.
-/// dispatch_swipe converts it to a PlayerSwiped global trigger.
-#[derive(Message)]
-pub struct SwipeEvent;
-
-/// Global trigger fired by dispatch_swipe.
-/// on_player_swiped reacts to it and advances or interrupts the sequence.
-#[derive(Event)]
-pub struct PlayerSwiped;
-
 /// Global trigger fired by tick systems when a tween completes.
 /// Carries batch_id so on_tween_batch_done can reject stale completions
 /// from steps that were interrupted and skipped.
@@ -29,10 +19,8 @@ pub struct TweenBatchDone {
 // =============================================================================
 
 #[derive(Component)] pub struct StepIntro;       // pack + lid fly in from off-screen
-#[derive(Component)] pub struct StepWaitSwipe1;  // waiting for first player swipe
 #[derive(Component)] pub struct StepOpening;     // lid swings open, pack nudges
 #[derive(Component)] pub struct StepFirstCard;   // first card rises from the pack
-#[derive(Component)] pub struct StepWaitCard;    // waiting for card-reveal swipe
 #[derive(Component)] pub struct StepCardReveal;  // current card flies along arc
 #[derive(Component)] pub struct StepNextCard;    // one-frame: increment progress + route
 #[derive(Component)] pub struct StepComplete;    // all cards revealed
@@ -87,7 +75,6 @@ pub struct NextBatchId(pub(crate) u32);
 #[derive(Clone, Copy, Debug, Default)]
 pub enum Easing {
     #[default] Linear,
-    EaseIn,
     EaseOut,
     EaseInOut,
     /// Overshoots then snaps back — springy landing feel.
@@ -100,7 +87,6 @@ impl Easing {
         let t = t.clamp(0.0, 1.0);
         match self {
             Easing::Linear    => t,
-            Easing::EaseIn    => t * t * t,
             Easing::EaseOut   => 1.0 - (1.0 - t).powi(3),
             Easing::EaseInOut => {
                 if t < 0.5 { 4.0 * t * t * t }
@@ -157,5 +143,6 @@ impl ArcTween {
 
 
 // cam 
+#[cfg(target_os = "android")]
 #[derive(Component)]
 pub struct CameraLocked;

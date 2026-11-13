@@ -1,6 +1,6 @@
 
 
-use bevy::{color::palettes::tailwind::*, prelude::*};
+use bevy::prelude::*;
 
 
 use crate::*;
@@ -19,20 +19,16 @@ impl Plugin for OtherSPPDPlugin {
         app
             .add_plugins(MeshPickingPlugin)
             .add_systems(OnEnter(GameState::OtherSppd), (
-                // init green field~
                 setup_scene,
-                // ui
                 spawn_buttons,
                 setup,
             ))
 
              .add_systems(Update, (
-                // Updates
                 kill_system,
                 draw_gizmos_system,
                 draw_mesh_intersections,
                 resolve_material_state,
-                // states related systems
                 idle_state_system,
                 walking_state_system,
                 attack_state_system,
@@ -133,21 +129,13 @@ fn setup_scene(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // Set up the materials.
-    let _white_matl = materials.add(Color::WHITE);
-    // let ground_matl = materials.add(Color::from(GRAY_300));
-    let _hover_matl = materials.add(Color::from(CYAN_300));
-    let _pressed_matl = materials.add(Color::from(YELLOW_300));
-
     // Ground
     commands.spawn((
         DespawnOnExit(GameState::OtherSppd),
         Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0).subdivisions(10))),
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        // Pickable::IGNORE, // Disable picking for the ground plane.
     ))
     .observe(|event: On<Pointer<Release>>, cmds: Commands, meshes: ResMut<Assets<Mesh>>, mats: ResMut<Assets<StandardMaterial>>| {
-        // call the function from spawn_ball.rs (use snake_case and full path)
         spawn_ball(event, cmds, meshes, mats);
     })
     ;

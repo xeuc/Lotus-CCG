@@ -34,11 +34,6 @@ pub struct BeingHovered;
 pub struct OriginalMaterial(pub Handle<StandardMaterial>);
 
 
-// to remove
-#[derive(Component)]
-pub struct CollidingComponent;
-
-
 #[derive(Component, PartialEq, Eq, Clone, Copy)]
 pub enum Team {
     Red,
@@ -50,15 +45,6 @@ pub enum Team {
 pub struct AttackCooldown {
     pub timer: Timer,
 }
-
-
-// #[derive(Component)]
-// pub struct MoveRight;
-
-// #[derive(Component)]
-// pub struct MoveLeft;
-
-
 
 
 // #### IMPORTS ###############################################
@@ -124,25 +110,3 @@ impl State<NpcState> for Attacking {}
 #[derive(Component)]
 pub struct Colliding {}
 impl State<NpcState> for Colliding {}
-
-
-
-
-
-
-
-
-// Example system using States
-// fn some_system(
-//     mut states: States, 
-//     query: Query<(Entity, &Idle)>
-// ) {
-//     for (entity, idle) in query.iter() {
-//         states.entity(entity).transition(idle, Idle {});
-//     }
-// }
-
-
-
-
-

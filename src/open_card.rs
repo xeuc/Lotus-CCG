@@ -14,19 +14,8 @@ use bevy_tweening::{Lens, Tween, TweenAnim, TweeningPlugin};
 use crate::GameState;
 
 
-// An example asset that contains a mesh and animation.
-// const GLTF_PATH: &str = "models/card_pack.gltf";
-// const GLTF_PATH: &str = "models/test_cube_animation.glb";
-// const GLTF_PATH: &str = "models/GenerickPack2.glb";
-// const GLTF_PATH: &str = "models/GenerickPack4.gltf";
-// const CARD_PATH: &str = "models/card_base_model.gltf";
-const _CUBE_PATH_16: &str = "models/cubeScale16.gltf";
-const _CUBE_PATH_01: &str = "models/cubeScale1.gltf";
-const _CUBE_PATH_08: &str = "models/cubeScale8.gltf";
 const TEST_ARMATURE_PATH: &str = "models/blender_armature_pack.gltf";
-// const TEST_ARMATURE_PATH: &str = "models/test_armature.gltf";
 
-const _PACK_POS: Vec3 = Vec3::new(0.0, 0.0, 0.0);
 const CARP_POS: Vec3 = Vec3::new(0.0, 0.0, 0.0);
 
 
@@ -41,14 +30,12 @@ impl Plugin for OpenCardPlugin {
                 spawn_light,
                 spawn_card_pack,
                 spawn_return_back_to_ui_button,
-                // _spawn_cube,
             ))
             .add_systems(Update, (
                 setup_scene_once_loaded,
                 spawn_cards,
                 button_handler,
             ).run_if(in_state(GameState::OpeningPack)))
-            // .add_systems(OnExit(GameState::OpeningPack), cleanup_ui);
             ;
     }
 }
@@ -99,9 +86,7 @@ fn spawn_card_pack(
     mut graphs: ResMut<Assets<AnimationGraph>>,
     
     mut meshes:    ResMut<Assets<Mesh>>,
-    // mut materials_color: ResMut<Assets<ColorMaterial>>,
 
-    // mut animation_players: Query<(Entity, &mut AnimationPlayer)>,
     mut materials_standard: ResMut<Assets<StandardMaterial>>,
 ) {
     // Build the animation graph
@@ -117,20 +102,6 @@ fn spawn_card_pack(
         graph_handle,
     });
 
-    // Fox
-    // commands.spawn((
-    //     DespawnOnExit(GameState::OpeningPack),
-    //     SceneRoot(
-    //         asset_server.load(GltfAssetLabel::Scene(0).from_asset(TEST_ARMATURE_PATH)),
-    //     ),
-    //     Transform::from_translation(Vec3::new(0.0, 0.0, 0.0))
-    //     .with_rotation(
-    //         Quat::from_rotation_y(PI/2.0)
-    //     )
-    //     .with_scale(Vec3::splat(0.5))
-    //     ,
-    // ));
-
     let card_height = 20.0;
     let card_width = 14.0;
     let card_thickness = 0.1;
@@ -144,7 +115,7 @@ fn spawn_card_pack(
                 commands.spawn((
                         Transform::from_xyz(0.0, 0.0, 2.0 + 0.0 as f32 * 0.1),
                         Visibility::Hidden,
-                    DespawnOnExit(GameState::DevPlayground),
+                    DespawnOnExit(GameState::PackShowcase),
                     Mesh3d(meshes.add(Cuboid::new(card_width, card_height, card_thickness))),
                     MeshMaterial3d(
                         materials_standard.add(StandardMaterial {
@@ -158,7 +129,7 @@ fn spawn_card_pack(
                     for a in [("textures/40921678_S1J5493BMXVBDKB3RF7P22B9N0.jpeg", 1.0, Quat::from_rotation_y(0.0)), ("textures/25973315_8HS551035DXVATFV2SADZRBG30.jpeg", -1.0, Quat::from_rotation_y(PI))] {
                         let photo_texture = asset_server.load(a.0);
                         parent.spawn((
-                            DespawnOnExit(GameState::DevPlayground),
+                            DespawnOnExit(GameState::PackShowcase),
                             Mesh3d(meshes.add(Plane3d {
                                 normal: Dir3::Z,
                                 half_size: Vec2::new(image_height/2., image_width/2.), // 13*19
@@ -283,8 +254,6 @@ fn spawn_cards(
                 });
 
             }
-
-        } else {
         }
         
     }
@@ -333,7 +302,6 @@ fn button_handler(
     for (interaction, mut color) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
-                // *color = BLUE.into();
                 *color = GREEN.into();
                 // Launch the opening!
                 next_state.set(GameState::InUI);

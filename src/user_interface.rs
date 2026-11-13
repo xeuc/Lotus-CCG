@@ -1,11 +1,13 @@
-//user_interface.rs
-// previously ui.rs but wasn't recognized by vsc extention
-
 use bevy::{
     color::palettes::basic::*, prelude::*
 };
 
 use crate::GameState;
+
+pub(crate) const STATUS_BAR_HEIGHT: i32 = 36;
+
+#[derive(Component)]
+struct GameViewport;
 
 pub struct UIPlugin;
 
@@ -13,18 +15,11 @@ impl Plugin for UIPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Startup, spawn_rot_button)
+            .add_systems(Update, position_game_viewport)
             .add_systems(OnEnter(GameState::InUI), (
                 spawn_camera,
                 spawn_buttons,
-
-                // spawn_dev_playground_button,
-                // spawn_other_sppd_button,
-                // spawn_switch_orentation_button,
             ))
-            // .add_systems(Update, (
-            //     // button_handler,
-            // ).run_if(in_state(GameState::InUI)))
-            // .add_systems(OnExit(GameState::InUI), cleanup_ui);
             ;
     }
 }
@@ -41,32 +36,63 @@ fn spawn_camera(mut commands: Commands) {
 }
 // Global across every states
 fn spawn_rot_button(mut commands: Commands) {
-    // Spawn switch ui
     commands
         .spawn((
-            Button,
+            GameViewport,
             Node {
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
                 position_type: PositionType::Absolute,
-                right: px(10),
-                top: px(10),
+                top: px(0),
+                right: px(0),
+                bottom: px(0),
+                left: px(0),
                 ..default()
             },
-            BackgroundColor(WHITE.into()),
             Pickable { should_block_lower: false, is_hoverable: false },
         ))
-        .observe(switch_orientation::<Pointer<Press>>())
-        .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
-        .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
-        .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
-        .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
-        .with_child((
-            Text::new("Rot"),
-            TextFont { font_size: 30.0, ..default() },
-            TextColor::BLACK,
-            TextLayout::new_with_justify(Justify::Center),
-        ));
+        .with_children(|viewport| {
+            viewport
+                .spawn((
+                    Button,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        right: px(10),
+                        top: px(8),
+                        ..default()
+                    },
+                    BackgroundColor(WHITE.into()),
+                    Pickable { should_block_lower: false, is_hoverable: false },
+                ))
+                .observe(switch_orientation::<Pointer<Press>>())
+                .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
+                .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
+                .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
+                .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
+                .with_child((
+                    Text::new("Rot"),
+                    TextFont { font_size: 30.0, ..default() },
+                    TextColor::BLACK,
+                    TextLayout::new_with_justify(Justify::Center),
+                ));
+        });
+}
+
+fn position_game_viewport(
+    state: Res<State<GameState>>,
+    mut viewport: Query<&mut Node, With<GameViewport>>,
+) {
+    let top = if *state.get() == GameState::PackShowcase {
+        px(STATUS_BAR_HEIGHT)
+    } else {
+        px(0)
+    };
+
+    for mut node in &mut viewport {
+        if node.top != top {
+            node.top = top;
+        }
+    }
 }
 
 
@@ -94,7 +120,7 @@ pub fn spawn_buttons(mut commands: Commands) {
                 // Pickable { should_block_lower: false, ..default() }, // omg this does smtg
                 Button,
                 DespawnOnExit(GameState::InUI),
-                Text::new("Dev Playground"),
+                Text::new("Pack Showcase"),
                 TextFont {
                     font_size: 30.0,
                     ..default()
@@ -103,14 +129,14 @@ pub fn spawn_buttons(mut commands: Commands) {
                 TextLayout::new_with_justify(Justify::Center),
                 BackgroundColor(WHITE.into()),
             ))
-            .observe(set_game_state_on::<Pointer<Press>>(GameState::DevPlayground))
+            .observe(set_game_state_on::<Pointer<Press>>(GameState::PackShowcase))
             .observe(set_bg_on::<Pointer<Press>>(GREEN.into()))
             .observe(set_bg_on::<Pointer<Release>>(GRAY.into()))
             .observe(set_bg_on::<Pointer<Over>>(GRAY.into()))
             .observe(set_bg_on::<Pointer<Out>>(WHITE.into()))
             ;
 
-            // spawn button to go to dev playground state
+            // Open the other prototype.
             parent.spawn((
                 Button,
                 DespawnOnExit(GameState::InUI),
@@ -183,49 +209,3 @@ pub fn switch_orientation<E: EntityEvent>() -> impl FnMut(On<E>, Single<&mut Win
         );
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // Update
-// fn button_handler(
-//     mut interaction_query: Query<
-//         (&Interaction, &mut BackgroundColor, &MenuButton),
-//         (Changed<Interaction>, With<Button>),
-//     >,
-//     mut next_state: ResMut<NextState<GameState>>,
-// ) {
-//     for (interaction, mut color, button) in &mut interaction_query {
-//         match *interaction {
-//             Interaction::Pressed => {
-//                 // *color = BLUE.into();
-//                 *color = GREEN.into();
-//                 // Launch the opening!
-//                 let new_state = match button {
-//                     MenuButton::OpenPack => GameState::OpeningPack,
-//                     MenuButton::DevPlayground => GameState::DevPlayground,
-//                     MenuButton::OtherSPPD => GameState::OtherSppd,
-//                     MenuButton::InUI => GameState::InUI,
-//                 };
-//                 info!("LotusDebug - Button pressed, changing state to {:?}", new_state);
-//                 next_state.set(new_state);
-//                 info!("LotusDebug - Current state: {:?}", next_state);
-//             }
-//             Interaction::Hovered => {
-//                 *color = GRAY.into();
-//             }
-//             Interaction::None => {
-//                 *color = WHITE.into();
-//             }
-//         }
-//     }
-// }

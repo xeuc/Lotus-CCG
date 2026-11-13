@@ -1,16 +1,17 @@
 
 
-use bevy::{light::DirectionalLightShadowMap, prelude::*};
-use bevy::camera_controller::free_camera::{FreeCamera, FreeCameraPlugin, FreeCameraState};
-
+use bevy::{
+    camera_controller::free_camera::FreeCameraPlugin, light::DirectionalLightShadowMap, prelude::*,
+};
 
 
 mod user_interface;
 mod open_pack;
 mod open_card;
+pub mod gameplay;
 #[cfg(target_os = "android")]
 mod android;
-mod dev;
+mod pack_showcase;
 mod other_sppd;
 mod core;
 
@@ -20,7 +21,7 @@ pub enum GameState {
     OpeningPack, // Player is oppening the pack that is in ressource
     OpeningPack2,
     #[default]
-    DevPlayground,
+    PackShowcase,
     OtherSppd, // TODO implement
     Binder, // TODO implement
     DeckBuilder, // TODO implement
@@ -47,7 +48,7 @@ pub fn main() {
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
         .add_plugins((
             core::audio::AudioPlugin,
-            // SavePlugin,
+            gameplay::GameplayPlugin,
             FreeCameraPlugin,
             user_interface::UIPlugin,
             open_card::OpenCardPlugin,
@@ -55,51 +56,8 @@ pub fn main() {
             
             #[cfg(target_os = "android")]
             android::AndroidPlugin,
-            dev::dev_playground::DevPlaygroundPlugin,
+            pack_showcase::pack_showcase::PackShowcasePlugin,
             other_sppd::other_sppd::OtherSPPDPlugin,
         ))
         .run();
 }
-
-use std::{fs, path::PathBuf};
-use std::io::{Read, Write};
-
-
-
-
-
-
-
-// #[derive(Resource)]
-// pub struct SaveDir(pub PathBuf);
-
-// pub struct SavePlugin;
-
-// impl Plugin for SavePlugin {
-//     fn build(&self, app: &mut App) {
-//         app.add_systems(Update, setup_save_dir);
-//         // app.add_systems(Update, save_system.run_if(resource_exists::<SaveDir>));
-//     }
-// }
-
-// #[cfg(target_os = "android")]
-// fn setup_save_dir(
-// ) {
-//     let android_app = bevy::android::ANDROID_APP
-//         .get()
-//         .expect("Bevy must be setup with the #[bevy_main] macro on Android");
-//     let data_path = android_app
-//         .internal_data_path()
-//         .expect("App has no data path");
-
-//     // WORKING :D
-//     println!("LOTUSDEBUG: {}", data_path.display());
-// }
-
-// #[cfg(not(target_os = "android"))]
-// fn setup_save_dir(
-// ) {
-//     use std::str::FromStr;
-//     let data_path = PathBuf::from_str(".").unwrap();
-//     println!("LOTUSDEBUG: {}", data_path.display());
-// }

@@ -49,51 +49,12 @@ pub fn attack_state_system(
 
 pub fn kill_system(
     mut commands: Commands,
-    // mut events: MessageWriter<DeathEvent>,
     query: Query<(Entity, &Life)>,
 ) {
     for (e, life) in &query {
         if life.hp <= 0.0 {
-            // events.write(DeathEvent(e));
             commands.entity(e).despawn();
         }
     }
 }
-
-// pub fn on_death_system(
-//     mut events: MessageReader<DeathEvent>,
-//     mut attackers: Query<(&AttackTarget, &mut MotionState)>,
-// ) {
-//     for DeathEvent(dead_entity) in events.read() {
-//         for (target, mut state) in attackers.iter_mut() {
-//             if target.0 == *dead_entity {
-//                 // target dead
-//                 *state = MotionState::Idle;
-//             }
-//         }
-//     }
-// }
-
-
-
-// pub fn set_attacking(mut query: Query<&mut MotionState>) {
-//     for mut state in query.iter_mut() {
-//         if some_condition {
-//             *state = MotionState::Attacking;
-//         }
-//     }
-// }
-
-// pub fn on_enter_attack(
-//     query: Query<
-//         (Entity, &MotionState),
-//         Changed<MotionState>
-//     >,
-// ) {
-//     for (entity, state) in query.iter() {
-//         if *state == MotionState::Attacking {
-//             println!(">>> Entity {entity:?} débute une attaque !");
-//         }
-//     }
-// }
 

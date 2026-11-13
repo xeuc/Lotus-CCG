@@ -1,7 +1,7 @@
 
 use bevy::prelude::*;
 
-use crate::dev::components::*;
+use crate::pack_showcase::components::*;
 
 // =============================================================================
 // STEP OnAdd OBSERVERS  —  one per animated step
@@ -13,9 +13,6 @@ use crate::dev::components::*;
 //   3. Insert tweens on the relevant entities with that batch_id.
 //   4. Set CurrentBatchId and PendingTweens on Pack.
 //
-// Wait steps (StepWaitSwipe1, StepWaitCard) intentionally have NO observer.
-// They do nothing until a PlayerSwiped trigger arrives.
-
 /// Step 0 — Pack and Lid fly in from off-screen simultaneously.
 pub fn on_add_step_intro(
     _trigger:       On<Add, StepIntro>,
@@ -50,7 +47,7 @@ pub fn on_add_step_intro(
         .insert(PendingTweens(count));
 }
 
-/// Step 2 — Lid swings open; pack gets a small inertia kick.
+/// Step 1 — Lid swings open; pack gets a small inertia kick.
 pub fn on_add_step_opening(
     _trigger:       On<Add, StepOpening>,
     mut commands:   Commands,
@@ -88,7 +85,7 @@ pub fn on_add_step_opening(
         .insert(PendingTweens(count));
 }
 
-/// Step 3 — First card rises from inside the pack; pack settles down.
+/// Step 2 — First card rises from inside the pack; pack settles down.
 pub fn on_add_step_first_card(
     _trigger:       On<Add, StepFirstCard>,
     mut commands:   Commands,
@@ -130,9 +127,8 @@ pub fn on_add_step_first_card(
         .insert(PendingTweens(count));
 }
 
-/// Step 5 — Current card flies along a Bézier arc; next card peeks from pack.
-/// Reads the card's live Transform so that interrupting the rise mid-animation
-/// starts the arc from wherever the card currently is, not from a fixed point.
+/// Step 3 — Current card flies along a Bézier arc; next card peeks from pack.
+/// Reads the card's live Transform so the arc starts from the card's current position.
 pub fn on_add_step_card_reveal(
     _trigger:       On<Add, StepCardReveal>,
     mut commands:   Commands,
@@ -179,10 +175,8 @@ pub fn on_add_step_card_reveal(
         .insert(PendingTweens(count));
 }
 
-/// One-frame transit state — only reached via natural arc completion.
-/// Increments progress then routes to StepWaitCard or StepComplete.
-/// Swipe interrupts bypass this entirely (they handle the increment themselves
-/// in on_player_swiped, then go straight to StepCardReveal).
+/// One-frame transit state reached after each card's arc completes.
+/// Increments progress and routes to the next card or completion.
 pub fn on_add_step_next_card(
     _trigger:       On<Add, StepNextCard>,
     mut commands:   Commands,
@@ -193,8 +187,7 @@ pub fn on_add_step_next_card(
     let Ok(pack) = pack_q.single() else { return };
     progress.current += 1;
 
-    // Bump the batch even for wait/complete steps so any residual
-    // TweenBatchDone from the just-finished arc is safely rejected.
+    // Bump the batch so any residual TweenBatchDone from the finished arc is rejected.
     next_batch.0 += 1;
     commands.entity(pack)
         .remove::<StepNextCard>()
@@ -205,7 +198,7 @@ pub fn on_add_step_next_card(
         commands.entity(pack).insert(StepComplete);
         info!("[PackOpen] All {} cards revealed!", progress.total);
     } else {
-        commands.entity(pack).insert(StepWaitCard);
+        commands.entity(pack).insert(StepCardReveal);
     }
 }
 
@@ -289,95 +282,13 @@ pub fn on_tween_batch_done(
     // Inserting an animated step marker fires its OnAdd observer immediately
     // at the next command flush, spawning tweens for that step.
     if is_intro {
-        commands.entity(pack).remove::<StepIntro>().insert(StepWaitSwipe1);
+        commands.entity(pack).remove::<StepIntro>().insert(StepOpening);
     } else if is_opening {
         commands.entity(pack).remove::<StepOpening>().insert(StepFirstCard);
     } else if is_first_card {
-        commands.entity(pack).remove::<StepFirstCard>().insert(StepWaitCard);
+        commands.entity(pack).remove::<StepFirstCard>().insert(StepCardReveal);
     } else if is_card_reveal {
         // StepNextCard increments progress and decides the next destination.
         commands.entity(pack).remove::<StepCardReveal>().insert(StepNextCard);
-    }
-}
-
-/// Reacts to PlayerSwiped.
-/// Waiting steps advance immediately. Animated steps are interrupted:
-/// for steps whose next destination has an OnAdd observer (animated steps),
-/// we just insert the new marker and its observer allocates a fresh batch_id,
-/// automatically orphaning the old tweens. For steps leading to passive
-/// wait markers (no OnAdd observer), we bump NextBatchId manually.
-pub fn on_player_swiped(
-    _trigger:       On<PlayerSwiped>,
-    mut commands:   Commands,
-    mut next_batch: ResMut<NextBatchId>,
-    mut progress:   ResMut<CardProgress>,
-    pack_q:         Query<(
-        Entity,
-        Has<StepWaitSwipe1>,
-        Has<StepIntro>,
-        Has<StepOpening>,
-        Has<StepFirstCard>,
-        Has<StepWaitCard>,
-        Has<StepCardReveal>,
-    ), With<Pack>>,
-) {
-    let Ok((pack, is_wait1, is_intro, is_opening, is_first_card, is_wait_card, is_card_reveal))
-        = pack_q.single() else { return };
-
-    if is_wait1 {
-        // Waiting → animated. OnAdd<StepOpening> allocates the new batch.
-        commands.entity(pack).remove::<StepWaitSwipe1>().insert(StepOpening);
-
-    } else if is_wait_card {
-        // Waiting → animated. OnAdd<StepCardReveal> allocates the new batch.
-        commands.entity(pack).remove::<StepWaitCard>().insert(StepCardReveal);
-
-    } else if is_intro {
-        // Skip intro. StepWaitSwipe1 has no OnAdd observer — bump manually.
-        next_batch.0 += 1;
-        commands.entity(pack)
-            .remove::<StepIntro>()
-            .insert(CurrentBatchId(next_batch.0))
-            .insert(PendingTweens(0))
-            .insert(StepWaitSwipe1);
-
-    } else if is_opening {
-        // Skip opening. OnAdd<StepFirstCard> will allocate a fresh batch,
-        // orphaning the lid and pack tweens currently running.
-        commands.entity(pack).remove::<StepOpening>().insert(StepFirstCard);
-            info!("[PackOpen] Skip opening.");
-
-    } else if is_first_card {
-        // Skip first-card rise. StepWaitCard has no OnAdd observer.
-        next_batch.0 += 1;
-        commands.entity(pack)
-            .remove::<StepFirstCard>()
-            .insert(CurrentBatchId(next_batch.0))
-            .insert(PendingTweens(0))
-            .insert(StepWaitCard);
-            info!("[PackOpen] First Card revealed!");
-
-    } else if is_card_reveal {
-        // Interrupt the arc and throw the next card immediately.
-        // We handle the increment here (not via StepNextCard) so we can skip
-        // the wait step and go straight back to StepCardReveal.
-        progress.current += 1;
-        if progress.current >= progress.total {
-            next_batch.0 += 1;
-            commands.entity(pack)
-                .remove::<StepCardReveal>()
-                .insert(CurrentBatchId(next_batch.0))
-                .insert(PendingTweens(0))
-                .insert(StepComplete);
-            info!("[PackOpen] All {} cards revealed!", progress.total);
-        } else {
-            // Remove then re-insert StepCardReveal so OnAdd fires again for
-            // the next card. The observer allocates a fresh batch_id,
-            // orphaning the arc that was just interrupted.
-            commands.entity(pack)
-                .remove::<StepCardReveal>()
-                .insert(StepCardReveal);
-            info!("[PackOpen] Progress is {}/{}", progress.current, progress.total);
-        }
     }
 }

@@ -15,8 +15,8 @@ use bevy::{
     winit::WinitSettings,
 };
 
-use dev::components::CameraLocked;
-use crate::dev;
+use pack_showcase::components::CameraLocked;
+use crate::pack_showcase;
 
 pub struct AndroidPlugin;
 
