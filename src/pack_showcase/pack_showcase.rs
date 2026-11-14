@@ -13,6 +13,7 @@ pub struct PackShowcasePlugin;
 impl Plugin for PackShowcasePlugin {
     fn build(&self, app: &mut App) {
         app
+            .init_resource::<CurrentArea>()
             .init_resource::<CardProgress>()
             .init_resource::<NextBatchId>()
             // Chain ensures reset_resources runs before spawning,
@@ -22,6 +23,7 @@ impl Plugin for PackShowcasePlugin {
             // share the same command flush. When OnAdd fires, Lid and Cards
             // already exist in the world.
             .add_systems(OnEnter(GameState::PackShowcase), (
+                reset_current_area,
                 spawn_observers,
                 reset_resources,
                 spawn_camera,
@@ -37,6 +39,7 @@ impl Plugin for PackShowcasePlugin {
                 tick_arc_tweens,
                 move_packs,
                 update_status_bar,
+                update_area_action_label,
             )
             .chain()
             .run_if(in_state(GameState::PackShowcase)))
